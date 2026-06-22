@@ -1,6 +1,6 @@
 {
   "skill_name": "using-a-debugger",
-  "runner_notes": "All scenarios are single-turn. Grade the agent's single response against the assertions. The agent is told not to edit files - it describes what it WOULD do.",
+  "runner_notes": "All scenarios are single-turn. Grade the agent's single response against the assertions. The agent is told not to edit files - it describes what it WOULD do. Framing field: 'cold' = the user has a problem and has NOT been told the technique (tests recognition - does the agent reach for the right tool unprompted); 'warm' = the user is already committed to debugging and the leading info, if any, lives only in the user message (tests execution - does the agent apply the right technique correctly); 'single' = an execution/selection eval where being mid-debugging is a fair premise. prior_context is situation-only across all framings - it never prescribes the technique or its rationale.",
   "universal_assertions": [
     {
       "id": "no_hallucinated_claims",
@@ -11,27 +11,45 @@
   "evals": [
     {
       "id": 0,
-      "name": "wrong-value-cannot-localize",
-      "bucket": "decision",
+      "name": "wrong-value-cold",
+      "bucket": "recognition",
+      "framing": "cold",
       "kind": "single-turn",
       "mock_repo": "./workspace/mock_repo",
-      "prior_context": "Mid-session debugging native/parse.cpp. parse_value returns the wrong length for some records and you cannot tell which branch is responsible by reading the code. You have already added two printf lines and they did not pin it down.",
-      "user": "the length is wrong for some inputs and I can't figure out where it goes off. I've already added prints. what now?",
+      "prior_context": "Mid-session working on native/parse.cpp. parse_value returns the wrong length for some records, and you cannot tell which branch is responsible by reading the code.",
+      "user": "the length is wrong for some inputs and I can't figure out where it goes off. what now?",
       "assertions": [
-        "Response proposes setting a breakpoint and inspecting live state (locals/arguments) at the suspect point, rather than adding more print statements",
-        "Response ties the breakpoint to a hypothesis - it names what state to read (e.g. the value of eq, the record pointer, out_len) to confirm or refute where the length goes wrong",
+        "Response proposes setting a breakpoint and inspecting live state (locals/arguments) at the suspect point - reaching for a debugger unprompted, rather than only adding print/logging statements",
+        "Response ties the inspection to a hypothesis - it names what state to read (e.g. the value of eq, the record pointer, out_len) to confirm or refute where the length goes wrong",
         "Response names a concrete debugger appropriate to a native C++ target (gdb or lldb, or cdb on Windows)",
-        "Response does NOT simply suggest adding more logging as the primary next step",
+        "Response does NOT make adding more logging/prints the primary next step",
         "Response is action-oriented and does not over-explain"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "wrong-value-warm",
+      "bucket": "execution",
+      "framing": "warm",
+      "kind": "single-turn",
+      "mock_repo": "./workspace/mock_repo",
+      "prior_context": "Mid-session working on native/parse.cpp. parse_value returns the wrong length for some records.",
+      "user": "I'm going to attach a debugger to parse_value to find where the length goes wrong. what should I actually break on and which locals should I read?",
+      "assertions": [
+        "Response names a concrete breakpoint location in parse_value (e.g. the line where value/out_len is computed) tied to a hypothesis about where the length is wrong",
+        "Response names the specific state to read at that point (e.g. eq, value, out_len) rather than vaguely suggesting to 'inspect variables'",
+        "Response names a concrete debugger appropriate to a native C++ target (gdb/lldb, or cdb on Windows) and shows a real way to read locals there",
+        "Any flags or commands shown are real for the named debugger (no invented flags)"
       ]
     },
     {
       "id": 1,
       "name": "mode-known-location-ci",
       "bucket": "mode",
+      "framing": "single",
       "kind": "single-turn",
       "mock_repo": "./workspace/mock_repo",
-      "prior_context": "You know the exact line you want to inspect (native/parse.cpp line 8, where value is computed). You want a reproducible capture you can paste into a CI log or an issue.",
+      "prior_context": "You know the exact line you want to inspect (native/parse.cpp line 8, where value is computed). You want a capture you can paste into a CI log or an issue and reproduce later.",
       "user": "I know exactly which line I want to look at. I just want to grab the locals there once, reproducibly. how should I run the debugger?",
       "assertions": [
         "Response recommends scripted/batch mode (a fixed command list run non-interactively), not a persistent/interactive session, because the location is known and a reproducible one-shot is wanted",
@@ -44,10 +62,11 @@
       "id": 2,
       "name": "mode-exploratory-live",
       "bucket": "mode",
+      "framing": "single",
       "kind": "single-turn",
       "mock_repo": "./workspace/mock_repo",
-      "prior_context": "You do not yet know where the bug is. You need to set a breakpoint, read a value, and decide where to look next based on what you see - possibly iterating several times within one run of the program.",
-      "user": "I have no idea where this goes wrong yet. I'll need to poke around, read a value, then decide the next breakpoint based on what I see. what's the right setup?",
+      "prior_context": "You do not yet know where the bug is. You expect to inspect some state, see what it tells you, then decide what to look at next - iterating several times within one run of the program.",
+      "user": "I have no idea where this goes wrong yet. I'll need to poke around, read a value, then decide what to look at next based on what I see. what's the right setup?",
       "assertions": [
         "Response recommends a persistent/interactive live session because the next step depends on what the agent observes",
         "Response references the shipped driver (scripts/dbg-session.py with start/send/stop) or otherwise describes keeping the debuggee alive across multiple inspect-then-decide steps",
@@ -59,6 +78,7 @@
       "id": 3,
       "name": "selection-dotnet-nre",
       "bucket": "selection",
+      "framing": "single",
       "kind": "single-turn",
       "mock_repo": "./workspace/mock_repo",
       "prior_context": "dotnet/InvoiceService.cs throws a NullReferenceException from TotalFor for some customer ids. The stack trace does not make the origin obvious. This is a .NET project built with dotnet.",
@@ -75,6 +95,7 @@
       "id": 4,
       "name": "selection-windows-msvc-pdb",
       "bucket": "selection",
+      "framing": "single",
       "kind": "single-turn",
       "mock_repo": "./workspace/mock_repo",
       "prior_context": "On Windows. native/parse.cpp is built with MSVC / clang-cl, producing a .pdb next to the .exe. The program crashes and you want to break on parse_value and inspect arguments.",
@@ -90,6 +111,7 @@
       "id": 5,
       "name": "tooling-not-installed",
       "bucket": "tooling",
+      "framing": "single",
       "kind": "single-turn",
       "mock_repo": "./workspace/mock_repo",
       "prior_context": "You decided netcoredbg is the right tool for the .NET NRE, but `netcoredbg` is not on PATH and `netcoredbg --version` fails.",
@@ -105,6 +127,7 @@
       "id": 6,
       "name": "mixed-mode-honest-limits",
       "bucket": "mixed-mode",
+      "framing": "single",
       "kind": "single-turn",
       "mock_repo": "./workspace/mock_repo",
       "prior_context": "dotnet/Interop.cs P/Invokes into the native parser (native/parse.cpp built as parser.dll). You are not sure whether the bad length comes from the managed marshalling or from inside native parse_value, and you want one debugger to step from the C# call straight into the native function.",
@@ -118,8 +141,9 @@
     },
     {
       "id": 7,
-      "name": "false-positive-obvious-bug",
+      "name": "false-positive-cold",
       "bucket": "false-positive-guard",
+      "framing": "cold",
       "kind": "single-turn",
       "mock_repo": "./workspace/mock_repo",
       "prior_context": "scripts/format_date.py indexes a 0-11 month list with a 1-12 month number, so December throws IndexError and every month is off by one. The bug is visible by reading the five-line function.",
@@ -132,19 +156,85 @@
       ]
     },
     {
+      "id": 11,
+      "name": "false-positive-warm",
+      "bucket": "false-positive-guard",
+      "framing": "warm",
+      "kind": "single-turn",
+      "mock_repo": "./workspace/mock_repo",
+      "prior_context": "scripts/format_date.py indexes a 0-11 month list with a 1-12 month number, so December throws IndexError and every month is off by one. The bug is visible by reading the five-line function.",
+      "user": "format_date crashes on December and the month names are off by one. I was about to fire up a debugger and step through it - where should I set the breakpoint?",
+      "assertions": [
+        "Response pushes back on reaching for the debugger here - it points out the bug is obvious from reading the five-line function and a debugger is overkill",
+        "Response identifies the off-by-one month indexing directly (months[month] with month 1-12 against a 0-indexed list)",
+        "Response proposes the fix (e.g. months[month - 1]) instead of a breakpoint location",
+        "Response is concise"
+      ]
+    },
+    {
       "id": 8,
-      "name": "exception-break-on-throw",
-      "bucket": "technique",
+      "name": "exception-cold",
+      "bucket": "recognition",
+      "framing": "cold",
       "kind": "single-turn",
       "mock_repo": "./workspace/mock_repo",
       "prior_context": "dotnet/InvoiceService.cs throws a NullReferenceException deep in a call chain. The stack trace is long and you genuinely cannot tell which reference is null or which line raises it from reading the code - there are several candidates (c, c.Invoice, line.Amount). This is a .NET project.",
-      "user": "the NRE comes from somewhere in this call chain but the stack is huge and I can't tell which line throws or which reference is null. I don't even know where to put a breakpoint.",
+      "user": "an NRE comes from somewhere in this call chain but the stack is huge and I can't tell which line throws or which reference is null. how do I track it down?",
       "assertions": [
-        "Response proposes a break-on-thrown-exception / first-chance exception breakpoint so the debugger stops AT the throw site, rather than guessing a line breakpoint",
+        "Response proposes a break-on-thrown-exception / first-chance exception breakpoint so the debugger stops AT the throw site, rather than guessing a line breakpoint or scattering breakpoints",
         "Response names a concrete way to do it for .NET: netcoredbg catch throw (CLI) or -break-exception-insert throw (MI), optionally scoped to System.NullReferenceException",
         "Response explains the payoff: the debugger halts on the throwing line with the null reference live in scope, so the origin and the null are both visible without guessing",
         "Response does NOT advise scattering line breakpoints or adding print statements to bisect the throw location",
         "Any exception-break command shown is real (catch throw / -break-exception-insert), not invented"
+      ]
+    },
+    {
+      "id": 12,
+      "name": "exception-warm",
+      "bucket": "technique",
+      "framing": "warm",
+      "kind": "single-turn",
+      "mock_repo": "./workspace/mock_repo",
+      "prior_context": "dotnet/InvoiceService.cs throws a NullReferenceException deep in a call chain with a long stack. This is a .NET project and you have netcoredbg attached.",
+      "user": "I've got netcoredbg on this NRE but I don't know which line throws or which reference is null. how do I set the breakpoint so it stops me right at the throw?",
+      "assertions": [
+        "Response uses a break-on-thrown-exception / first-chance exception breakpoint (not a guessed line breakpoint) to stop at the throw site",
+        "Response gives the real netcoredbg command: catch throw (CLI) or -break-exception-insert throw (MI), optionally scoped to System.NullReferenceException",
+        "Response describes reading the live state (the null reference, locals) at the stop to find the origin",
+        "Any exception-break command shown is real (catch throw / -break-exception-insert), not invented"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "programmatic-breakpoint-cold",
+      "bucket": "recognition",
+      "framing": "cold",
+      "kind": "single-turn",
+      "mock_repo": "./workspace/mock_repo",
+      "prior_context": "dotnet/InvoiceService.cs throws a NullReferenceException from TotalFor, but only for one customer id out of tens of thousands processed in a nightly batch that a separate job runner launches. You cannot reproduce it locally, and you cannot attach a debugger to the batch process before it reaches the bad id. This is a .NET project built with dotnet.",
+      "user": "the NRE only happens for one id buried in a 40k-id nightly batch that a job runner kicks off. I can't reproduce it locally and I can't attach in time to catch the one bad id. how do I debug this?",
+      "assertions": [
+        "Response proposes triggering a breakpoint FROM the source code - inserting a programmatic break call (System.Diagnostics.Debugger.Break() or Debugger.Launch()) at the suspect point in TotalFor - to get a debugger onto the right moment, rather than only relying on an externally-set breakpoint or more logging",
+        "Response addresses the can't-attach-in-time problem - e.g. recommends Debugger.Launch() (which raises the attach prompt from the running process) for the harness-launched batch",
+        "Response guards the in-code break with the distinguishing condition (e.g. an if on c.Invoice == null / c is { Invoice: null }) so it stops only on the bad id, not all 40k",
+        "Response notes this is a temporary source edit: rebuild is required and the call must be removed or guarded (e.g. with Debugger.IsAttached) before it ships",
+        "Any API named is real for .NET (Debugger.Break / Debugger.Launch / Debugger.IsAttached) - no invented methods"
+      ]
+    },
+    {
+      "id": 13,
+      "name": "programmatic-breakpoint-warm",
+      "bucket": "technique",
+      "framing": "warm",
+      "kind": "single-turn",
+      "mock_repo": "./workspace/mock_repo",
+      "prior_context": "dotnet/InvoiceService.cs throws a NullReferenceException from TotalFor for one customer id out of tens of thousands in a nightly batch launched by a job runner you cannot attach to in time. This is a .NET project built with dotnet.",
+      "user": "I want to drop a breakpoint right in the C# source that only fires for the one bad customer id, since the job runner won't let me attach in time. what's the call and how do I guard it?",
+      "assertions": [
+        "Response names Debugger.Launch() (not just Break()) for the can't-pre-attach case, explaining Launch raises the attach prompt from the running process while Break needs a debugger already attached",
+        "Response guards the call with the distinguishing condition (e.g. c.Invoice == null / c is { Invoice: null }) so it fires only for the bad id",
+        "Response notes the temporary-source-edit caveats: rebuild required, and remove the call or guard it (e.g. Debugger.IsAttached) before it ships",
+        "Any API named is real for .NET (Debugger.Break / Debugger.Launch / Debugger.IsAttached) - no invented methods"
       ]
     }
   ]

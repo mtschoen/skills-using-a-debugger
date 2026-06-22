@@ -314,6 +314,22 @@ def grade_unit(unit: GradingUnit, model: str | None, timeout: int) -> dict:
     return record
 
 
+def effective_pass_rate(record: dict) -> float | None:
+    """Pass rate for a graded unit with the universal (no-hallucination) check
+    gated as a hard fail.
+
+    The universal assertion defines a fabricated command as an automatic run
+    failure regardless of how many per-eval assertions passed, so a response that
+    invents a debugger command scores 0 here even if its other assertions held.
+    Returns None for units that were never graded (no summary, e.g. errored).
+    """
+    if "summary" not in record:
+        return None
+    if record.get("universal", {}).get("passed") is False:
+        return 0.0
+    return record["summary"].get("pass_rate", 0.0)
+
+
 def summarize(records: list[dict]) -> dict:
     total = len(records)
     errored = [r for r in records if "_error" in r]
@@ -321,23 +337,33 @@ def summarize(records: list[dict]) -> dict:
         r for r in records if r.get("universal", {}).get("passed") is False
     ]
 
-    pass_rates = []
-    for r in records:
-        if "summary" in r:
-            pass_rates.append(r["summary"].get("pass_rate", 0.0))
+    pass_rates = [
+        rate for r in records if (rate := effective_pass_rate(r)) is not None
+    ]
     mean_rate = sum(pass_rates) / len(pass_rates) if pass_rates else 0.0
+
+    # Ungated companion: per-eval assertion pass rate WITHOUT the hallucination
+    # gate, so the gating effect is visible rather than silently folded in.
+    assertion_only = [
+        r["summary"].get("pass_rate", 0.0) for r in records if "summary" in r
+    ]
+    mean_rate_assertions_only = (
+        sum(assertion_only) / len(assertion_only) if assertion_only else 0.0
+    )
 
     by_config: dict[str, list] = {"with_skill": [], "without_skill": []}
     for r in records:
         config = r.get("config")
-        if config in by_config and "summary" in r:
-            by_config[config].append(r["summary"].get("pass_rate", 0.0))
+        rate = effective_pass_rate(r)
+        if config in by_config and rate is not None:
+            by_config[config].append(rate)
 
     return {
         "total_units_graded": total,
         "errored": len(errored),
         "universal_failures": len(universal_failures),
         "mean_pass_rate": mean_rate,
+        "mean_pass_rate_assertions_only": mean_rate_assertions_only,
         "mean_pass_rate_with_skill": (
             sum(by_config["with_skill"]) / len(by_config["with_skill"])
             if by_config["with_skill"]

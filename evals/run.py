@@ -27,8 +27,10 @@ so the agent can inspect the mock repo but never edits it.
 import argparse
 import json
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -70,7 +72,9 @@ def load_evals(evals_path: Path) -> list:
     return data["evals"]
 
 
-def build_prompt(eval_entry: dict, config: str, skill_md: str) -> str:
+def build_prompt(
+    eval_entry: dict, config: str, skill_md: str, mock_repo_path: str
+) -> str:
     skill_section = (
         SKILL_SECTION_WRAPPER.format(skill_md=skill_md)
         if config == "with_skill"
@@ -80,11 +84,13 @@ def build_prompt(eval_entry: dict, config: str, skill_md: str) -> str:
         skill_section=skill_section,
         prior_context=eval_entry["prior_context"],
         user_message=eval_entry["user"],
-        mock_repo=eval_entry["mock_repo"],
+        mock_repo=mock_repo_path,
     )
 
 
-def invoke_agent(prompt: str, model: str | None, timeout: int) -> tuple[str, dict]:
+def invoke_agent(
+    prompt: str, model: str | None, timeout: int, cwd: str
+) -> tuple[str, dict]:
     cmd = [
         "claude",
         "-p",
@@ -110,6 +116,7 @@ def invoke_agent(prompt: str, model: str | None, timeout: int) -> tuple[str, dic
             errors="replace",
             timeout=timeout,
             env=env,
+            cwd=cwd,
         )
     except subprocess.TimeoutExpired:
         return "", {"_error": f"agent timeout after {timeout}s"}
@@ -149,8 +156,20 @@ def run_single_turn(
     model: str | None,
     timeout: int,
 ) -> dict:
-    prompt = build_prompt(eval_entry, config, skill_md)
-    response, timing = invoke_agent(prompt, model, timeout)
+    # Run the agent in an isolated sandbox containing ONLY a copy of the mock
+    # repo - never the skill repo itself. Otherwise the agent (which has
+    # Read/Grep/Glob) can read SKILL.md and references/ straight off disk,
+    # contaminating the without_skill baseline. The sandbox lives under the
+    # system temp dir, outside the skill tree.
+    mock_source = Path(eval_entry["mock_repo"]).resolve()
+    sandbox = Path(tempfile.mkdtemp(prefix="dbg-eval-"))
+    try:
+        mock_name = mock_source.name
+        shutil.copytree(mock_source, sandbox / mock_name)
+        prompt = build_prompt(eval_entry, config, skill_md, f"./{mock_name}")
+        response, timing = invoke_agent(prompt, model, timeout, str(sandbox))
+    finally:
+        shutil.rmtree(sandbox, ignore_errors=True)
     if "_error" in timing:
         return {"status": "error", "error": timing["_error"]}
     write_run(run_dir, response, timing)
