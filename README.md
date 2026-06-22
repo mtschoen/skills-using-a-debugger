@@ -1,21 +1,82 @@
 # using-a-debugger
 
-A Claude skill that teaches agents to drive interactive debuggers (breakpoints,
-stepping, reading live program state) instead of falling back to print-debugging.
-Cross-platform: Windows, Linux, macOS. First languages: C# (netcoredbg) and
-C++ (lldb / gdb / cdb).
-
-Two interaction modes:
-
-- **Scripted / batch** - run a debugger non-interactively, capture output. The
-  reliable default, works everywhere.
-- **Persistent live session** - `scripts/dbg-session.py`, a client/server driver
-  that holds a debugger process alive so the agent can `break`, `run`, `step`,
-  and read locals across separate tool calls. Three backend families (MI for
-  netcoredbg + gdb, lldb CLI, cdb) behind one uniform verb language.
+A Claude skill that teaches agents to drive interactive debuggers (breakpoints, stepping,
+reading live program state) instead of falling back to print-debugging. Cross-platform:
+Windows, Linux, macOS. Languages: C# (netcoredbg) and native C/C++ (lldb / gdb / cdb).
 
 See `SKILL.md` for the decision logic and `references/` for per-debugger detail.
 
-Development notes (driver tests, evals, support matrix) are filled in as the
-build proceeds. Only `SKILL.md`, `scripts/`, `references/`, and `assets/` ship;
-`evals/`, `workspace/`, and this README are dev-only.
+## Two interaction modes
+
+- **Scripted / batch** - run a debugger non-interactively, capture output. The reliable
+  default; use it when the breakpoint location is known. See `references/scripted-batch.md`.
+- **Persistent live session** - `scripts/dbg-session.py`, a client/server driver that holds
+  a debugger process alive so the agent can `break`, `run`, `step`, and read locals across
+  separate tool calls. Use it when you do not yet know where the bug is and must follow
+  state interactively. See `references/interactive-sessions.md`.
+
+## Support matrix
+
+| Debugger | Language | Platforms | Backend family | Transport |
+|---|---|---|---|---|
+| netcoredbg | .NET (C#/F#/VB) | Windows, Linux, macOS | MI (self-framing) | pipe |
+| gdb | native C/C++ | Linux (primary) | MI (self-framing) | PTY on Unix |
+| lldb | native C/C++ | macOS, Linux, Windows (clang) | CLI + content-gated marker | pipe |
+| cdb | native C/C++ | Windows (MSVC/clang-cl PDB) | CLI + `.echo` marker | pipe |
+
+The driver exposes one **uniform verb language** across all four - `break FILE:LINE`, `run`,
+`continue`, `step`, `stepin`, `local NAME`, `bt`, `raw NATIVE...` - and each backend
+translates to its debugger's native protocol. The three backend families exist because the
+spike proved their I/O models genuinely differ (MI is self-framing; lldb delivers stops
+asynchronously and needs content-based gating; cdb is synchronous).
+
+### Mixed managed/native verdict
+
+No single pipe-driveable debugger cleanly steps across the C# managed / native (P/Invoke)
+boundary - netcoredbg is managed-only, cdb/lldb treat managed frames as opaque, and Visual
+Studio does true mixed-mode but only interactively. `references/mixed-mode.md` gives the
+honest limits and the realistic workarounds.
+
+## Running the driver locally
+
+```bash
+# start a session (binary is auto-discovered; override with --debugger-path)
+python scripts/dbg-session.py start --debugger lldb --session demo -- ./hello
+
+# drive it - each send is a separate process; state persists in the server
+python scripts/dbg-session.py send --session demo "break hello.cpp:3"
+python scripts/dbg-session.py send --session demo "run"
+python scripts/dbg-session.py send --session demo "local a"
+python scripts/dbg-session.py stop --session demo
+```
+
+## Driver tests
+
+The driver has a stdlib-only pytest suite under `scripts/dbgsession/`. Unit tests (transport,
+MI parser, discovery) run everywhere; integration tests are gated with `skipif` on the
+relevant debugger/compiler being present.
+
+```bash
+cd scripts/dbgsession && python -m pytest -q
+```
+
+On a machine with lldb + cdb + clang installed, expect the lldb and cdb integration tests to
+run; netcoredbg and gdb legs skip unless those tools are on PATH (set `$NETCOREDBG` /
+`$GDB`, or run the gdb leg on Linux).
+
+## Evals
+
+Decision-surface evals (single-turn, adapted from the `fast-tests` harness) live in
+`evals/`. They check that the skill steers the agent toward a hypothesis-driven debugger
+workflow, the right mode, and the right debugger - and away from print-debugging an obvious
+one-line bug.
+
+```bash
+python evals/run.py  --evals evals/evals.json --skill-md SKILL.md --output-dir workspace/eval-out
+python evals/grade.py --responses-dir workspace/eval-out --evals evals/evals.json
+```
+
+## What ships
+
+Only `SKILL.md`, `scripts/`, `references/`, and `assets/` are installed. `evals/`,
+`workspace/`, and this README are dev-only (excluded by the installer allowlist).
