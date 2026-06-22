@@ -37,6 +37,16 @@ The debugger serves a hypothesis. Every breakpoint should be able to confirm or 
 
 If you find yourself stepping without a question in mind, stop and go back to step 1.
 
+## Break on the exception
+
+When the bug is an exception with no clear origin (a `NullReferenceException` from a deep
+stack, a C++ `throw` you cannot localize), do not guess a line breakpoint. Tell the debugger
+to stop the moment the exception is thrown - it halts you at the throw site with the null (or
+bad argument) live in scope. This is the first move for "exception, no clear origin." Per
+debugger: netcoredbg `catch throw *`, gdb `catch throw`, lldb `break set -E c++`, cdb
+`sxe eh`/`sxe clr`. Full grammar, stages (throw vs unhandled), a worked NRE example, and the
+Windows lldb nuance are in `references/break-on-exception.md`.
+
 ## Mode decision
 
 **Start scripted.** Feed the debugger a fixed command list, run it non-interactively, read

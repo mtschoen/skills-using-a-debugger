@@ -34,6 +34,7 @@ persistent driver.
 | step out | `finish` |
 | backtrace | `backtrace` |
 | read a variable | `print NAME` |
+| break on thrown exception | `catch throw *` (or `catch throw <Type>`; `catch unhandled *`) |
 
 ### MI commands (driver, `--interpreter=mi`)
 
@@ -45,6 +46,7 @@ persistent driver.
 | step over | `-exec-next` |
 | step into | `-exec-step` |
 | read a local | `-var-create NAME * NAME` -> parse `value="..."` from `^done` |
+| break on thrown exception | `-break-exception-insert throw *` (driver: `raw -break-exception-insert throw *`) |
 
 Verified CLI batch output (trimmed of library-load noise):
 

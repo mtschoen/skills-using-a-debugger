@@ -33,6 +33,7 @@ variables, which makes `frame variable` show `<optimized out>`.
 | evaluate expression | `expression EXPR` | `p EXPR` |
 | mutate a variable | `expression sum = -1` | - |
 | read memory | `memory read ADDR` | `x ADDR` |
+| break on thrown exception | `break set -E c++` (Linux/macOS; see note) | - |
 
 Verified stop + locals output:
 
@@ -78,3 +79,7 @@ Live mutation is confirmed: `expression sum = -1` returns `(int) $0 = -1`.
   process. The driver's `stop` handles this.
 - **Loop targets hit the breakpoint repeatedly**: a breakpoint inside a loop stops on every
   iteration; `continue` lands on the next hit, not at program exit.
+- **`break set -E c++` is Itanium-ABI only**: it binds on Linux/macOS but stays
+  pending/unbound against a Windows MSVC-ABI binary (no `__cxa_throw` symbol). On Windows
+  lldb still stops on the C++ `throw` via the SEH code `0xe06d7363`. Full detail and the
+  per-debugger exception-break table: `references/break-on-exception.md`.

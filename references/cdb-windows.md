@@ -38,6 +38,7 @@ cdb uses terse single-letter commands. Backticks denote source-line syntax.
 | read one local | `dv NAME` |
 | evaluate C++ expression | `?? EXPR` |
 | read memory | `db ADDR` / `dd ADDR` / `dq ADDR` |
+| break on thrown exception | `sxe eh` (native C++) / `sxe clr` (managed) / `sxe av` (access violation) |
 | quit | `q` |
 
 Verified stop + locals output (clang-cl PDB target):

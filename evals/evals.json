@@ -130,6 +130,22 @@
         "Response proposes the fix (e.g. months[month - 1]) rather than a debugging session",
         "Response is concise"
       ]
+    },
+    {
+      "id": 8,
+      "name": "exception-break-on-throw",
+      "bucket": "technique",
+      "kind": "single-turn",
+      "mock_repo": "./workspace/mock_repo",
+      "prior_context": "dotnet/InvoiceService.cs throws a NullReferenceException deep in a call chain. The stack trace is long and you genuinely cannot tell which reference is null or which line raises it from reading the code - there are several candidates (c, c.Invoice, line.Amount). This is a .NET project.",
+      "user": "the NRE comes from somewhere in this call chain but the stack is huge and I can't tell which line throws or which reference is null. I don't even know where to put a breakpoint.",
+      "assertions": [
+        "Response proposes a break-on-thrown-exception / first-chance exception breakpoint so the debugger stops AT the throw site, rather than guessing a line breakpoint",
+        "Response names a concrete way to do it for .NET: netcoredbg catch throw (CLI) or -break-exception-insert throw (MI), optionally scoped to System.NullReferenceException",
+        "Response explains the payoff: the debugger halts on the throwing line with the null reference live in scope, so the origin and the null are both visible without guessing",
+        "Response does NOT advise scattering line breakpoints or adding print statements to bisect the throw location",
+        "Any exception-break command shown is real (catch throw / -break-exception-insert), not invented"
+      ]
     }
   ]
 }

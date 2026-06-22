@@ -31,6 +31,7 @@ g++ -g -O0 -o hello hello.cpp      # or: clang++ -g -O0 -o hello hello.cpp
 | read one var | `print NAME` | `p NAME` |
 | mutate a variable | `set var sum = -1` | - |
 | read memory | `x/FMT ADDR` | - |
+| break on thrown exception | `catch throw` (or `catch throw <regexp>`) | - |
 
 Verified stop + locals output (GNU gdb 17.2, Linux):
 
