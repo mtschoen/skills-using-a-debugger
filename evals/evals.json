@@ -1,0 +1,135 @@
+{
+  "skill_name": "using-a-debugger",
+  "runner_notes": "All scenarios are single-turn. Grade the agent's single response against the assertions. The agent is told not to edit files - it describes what it WOULD do.",
+  "universal_assertions": [
+    {
+      "id": "no_hallucinated_claims",
+      "text": "Response contains no false or unverifiable factual claims that the agent introduced itself. Every file path, debugger command, flag, or invocation the response states as fact must match the mock repo, match the using-a-debugger skill content, or be a legitimate public-knowledge reference about the named debugger. Fabricated debugger flags or invented commands are an automatic failure regardless of other assertions. Facts provided in prior_context are treated as ground truth and may be reused without re-verification.",
+      "applies_to": "every agent response"
+    }
+  ],
+  "evals": [
+    {
+      "id": 0,
+      "name": "wrong-value-cannot-localize",
+      "bucket": "decision",
+      "kind": "single-turn",
+      "mock_repo": "./workspace/mock_repo",
+      "prior_context": "Mid-session debugging native/parse.cpp. parse_value returns the wrong length for some records and you cannot tell which branch is responsible by reading the code. You have already added two printf lines and they did not pin it down.",
+      "user": "the length is wrong for some inputs and I can't figure out where it goes off. I've already added prints. what now?",
+      "assertions": [
+        "Response proposes setting a breakpoint and inspecting live state (locals/arguments) at the suspect point, rather than adding more print statements",
+        "Response ties the breakpoint to a hypothesis - it names what state to read (e.g. the value of eq, the record pointer, out_len) to confirm or refute where the length goes wrong",
+        "Response names a concrete debugger appropriate to a native C++ target (gdb or lldb, or cdb on Windows)",
+        "Response does NOT simply suggest adding more logging as the primary next step",
+        "Response is action-oriented and does not over-explain"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "mode-known-location-ci",
+      "bucket": "mode",
+      "kind": "single-turn",
+      "mock_repo": "./workspace/mock_repo",
+      "prior_context": "You know the exact line you want to inspect (native/parse.cpp line 8, where value is computed). You want a reproducible capture you can paste into a CI log or an issue.",
+      "user": "I know exactly which line I want to look at. I just want to grab the locals there once, reproducibly. how should I run the debugger?",
+      "assertions": [
+        "Response recommends scripted/batch mode (a fixed command list run non-interactively), not a persistent/interactive session, because the location is known and a reproducible one-shot is wanted",
+        "Response gives a concrete batch invocation for a native debugger (e.g. gdb -batch -ex ... --args, or lldb -b -o ...) with breakpoint + run + read-locals commands",
+        "Response does NOT reach for the persistent dbg-session.py driver for this known-location one-shot case",
+        "Any flags or commands shown are real for the named debugger (no invented flags)"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "mode-exploratory-live",
+      "bucket": "mode",
+      "kind": "single-turn",
+      "mock_repo": "./workspace/mock_repo",
+      "prior_context": "You do not yet know where the bug is. You need to set a breakpoint, read a value, and decide where to look next based on what you see - possibly iterating several times within one run of the program.",
+      "user": "I have no idea where this goes wrong yet. I'll need to poke around, read a value, then decide the next breakpoint based on what I see. what's the right setup?",
+      "assertions": [
+        "Response recommends a persistent/interactive live session because the next step depends on what the agent observes",
+        "Response references the shipped driver (scripts/dbg-session.py with start/send/stop) or otherwise describes keeping the debuggee alive across multiple inspect-then-decide steps",
+        "Response correctly distinguishes this from the scripted/batch case (it explains or implies that exploration is why a live session beats a fixed command list here)",
+        "Response is action-oriented"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "selection-dotnet-nre",
+      "bucket": "selection",
+      "kind": "single-turn",
+      "mock_repo": "./workspace/mock_repo",
+      "prior_context": "dotnet/InvoiceService.cs throws a NullReferenceException from TotalFor for some customer ids. The stack trace does not make the origin obvious. This is a .NET project built with dotnet.",
+      "user": "InvoiceService.TotalFor throws a NullReferenceException for some ids and the stack doesn't tell me which reference is null. how do I debug this?",
+      "assertions": [
+        "Response selects netcoredbg as the debugger for the .NET managed code",
+        "Response proposes breaking at or near TotalFor and inspecting which reference is null (e.g. c, or c.Invoice) - hypothesis-driven, not random stepping",
+        "Response notes the need for a Debug build (dotnet build -c Debug) or debug symbols",
+        "Response does NOT select a native-only debugger (gdb/lldb/cdb) for this managed code",
+        "Any netcoredbg commands shown are real (no invented flags)"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "selection-windows-msvc-pdb",
+      "bucket": "selection",
+      "kind": "single-turn",
+      "mock_repo": "./workspace/mock_repo",
+      "prior_context": "On Windows. native/parse.cpp is built with MSVC / clang-cl, producing a .pdb next to the .exe. The program crashes and you want to break on parse_value and inspect arguments.",
+      "user": "this is a Windows MSVC build with a .pdb. it crashes in the native parser. which debugger and how do I break on the function?",
+      "assertions": [
+        "Response selects cdb (or WinDbg) as the right debugger for a Windows MSVC/PDB native build",
+        "Response shows a real cdb breakpoint approach (e.g. bp with the file:line backtick syntax or bp module!function) and a way to inspect locals/args (dv)",
+        "Response does NOT recommend gdb for the MSVC-PDB binary (gdb does not read MSVC PDBs well)",
+        "Any cdb commands shown are real (no invented commands)"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "tooling-not-installed",
+      "bucket": "tooling",
+      "kind": "single-turn",
+      "mock_repo": "./workspace/mock_repo",
+      "prior_context": "You decided netcoredbg is the right tool for the .NET NRE, but `netcoredbg` is not on PATH and `netcoredbg --version` fails.",
+      "user": "you said use netcoredbg but it's not installed - `netcoredbg` isn't found. now what?",
+      "assertions": [
+        "Response does NOT give up or fall back to print-debugging just because the tool is missing",
+        "Response proposes detecting/installing the debugger: for netcoredbg specifically, downloading the release artifact (from the Samsung/netcoredbg releases) and putting it on PATH or pointing the driver at it",
+        "Response keeps the path forward concrete (install step, then resume the debug plan)",
+        "Any install commands or URLs shown are plausible and not fabricated specifics"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "mixed-mode-honest-limits",
+      "bucket": "mixed-mode",
+      "kind": "single-turn",
+      "mock_repo": "./workspace/mock_repo",
+      "prior_context": "dotnet/Interop.cs P/Invokes into the native parser (native/parse.cpp built as parser.dll). You are not sure whether the bad length comes from the managed marshalling or from inside native parse_value, and you want one debugger to step from the C# call straight into the native function.",
+      "user": "can I just set one debugger to step from the C# Parse call straight into the native parse_value and watch both sides?",
+      "assertions": [
+        "Response is honest that no single pipe-driveable debugger cleanly steps across the C# managed / native boundary - it does not falsely promise a one-tool mixed-mode flow",
+        "Response offers a realistic workaround: debug the side most likely at fault with its own tool (netcoredbg for managed, cdb/lldb/gdb for native), or break on the native entry from the native side, or use two debuggers, or Visual Studio interactively",
+        "Response helps narrow which side the bug is on rather than insisting on crossing the boundary",
+        "Response does not fabricate a debugger feature or flag that would magically cross the boundary over a pipe"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "false-positive-obvious-bug",
+      "bucket": "false-positive-guard",
+      "kind": "single-turn",
+      "mock_repo": "./workspace/mock_repo",
+      "prior_context": "scripts/format_date.py indexes a 0-11 month list with a 1-12 month number, so December throws IndexError and every month is off by one. The bug is visible by reading the five-line function.",
+      "user": "format_date is returning the wrong month name and crashes on December. what's going on?",
+      "assertions": [
+        "Response identifies the off-by-one month indexing directly from reading the code (months[month] with month 1-12 against a 0-indexed list)",
+        "Response does NOT reach for a debugger / breakpoints for this obvious one-line bug",
+        "Response proposes the fix (e.g. months[month - 1]) rather than a debugging session",
+        "Response is concise"
+      ]
+    }
+  ]
+}
