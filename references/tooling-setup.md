@@ -4,6 +4,29 @@ Do not give up because "the debugger isn't installed." Detect what is present, t
 the one that fits the language/platform. No machine-specific paths below - everything is
 derived from `PATH`, environment variables, or platform install roots.
 
+## Automated: one command
+
+`scripts/setup-debuggers.py` does the whole detect-then-install loop for you. It is
+idempotent and platform-gated: it installs only the debuggers that make sense for the
+current OS and skips any already discoverable (it reuses `discovery.find_debugger`, so the
+lldb health-check and platform-root fallbacks apply).
+
+```bash
+python scripts/setup-debuggers.py            # ensure every relevant debugger is present
+python scripts/setup-debuggers.py --dry-run  # show what it would install, change nothing
+python scripts/setup-debuggers.py --only netcoredbg,lldb
+```
+
+Targets per platform: Linux installs netcoredbg/gdb/lldb, macOS installs netcoredbg/lldb,
+Windows installs netcoredbg/cdb/lldb. A few paths cannot run fully unattended and are
+reported as `manual` with the exact next step: password-required `sudo` on Linux, and
+`xcode-select --install` on macOS (it launches Apple's GUI installer). Everything else
+installs without prompting. (The umbrella skills installer can run this for you after a
+skill install: `install-skills.sh --setup-debuggers` / `install-skills.bat --setup-debuggers`.)
+
+The rest of this page is the manual playbook the script automates - reach for it when you
+want to install one tool by hand or understand what the script is doing.
+
 ## Pick the right tool
 
 | Language | Platform | Debugger | Reference |
@@ -49,11 +72,14 @@ health-check for lldb.
 
 ### netcoredbg (.NET, all platforms)
 
-Not distributed via package managers. Download the release artifact and extract:
+Not distributed via package managers. Download the release artifact and extract. The
+official releases are `netcoredbg-win64.zip`, `netcoredbg-linux-amd64.tar.gz`,
+`netcoredbg-linux-arm64.tar.gz`, and `netcoredbg-osx-amd64.tar.gz` - there is **no native
+macOS arm64 build**, so Apple Silicon uses the `osx-amd64` binary under Rosetta 2 (Windows
+arm64 likewise falls back to `win64`).
 
 ```bash
 # pick the asset for your platform from github.com/Samsung/netcoredbg/releases
-#   netcoredbg-win64.zip / netcoredbg-linux-amd64.tar.gz / netcoredbg-osx-amd64.tar.gz
 # extract, then put the netcoredbg binary on PATH, or set:
 export NETCOREDBG=/path/to/netcoredbg            # POSIX
 # or pass --debugger-path to dbg-session.py
@@ -62,6 +88,11 @@ export NETCOREDBG=/path/to/netcoredbg            # POSIX
 ```powershell
 $env:NETCOREDBG = "C:\path\to\netcoredbg\netcoredbg.exe"   # Windows (parameterize the path)
 ```
+
+`setup-debuggers.py` extracts into a canonical per-user dir derived from the environment
+(`%LOCALAPPDATA%\Programs\netcoredbg\` on Windows, `$XDG_DATA_HOME/netcoredbg` or
+`~/.local/share/netcoredbg` on POSIX), and `discovery.find_debugger("netcoredbg")` looks
+there as a fallback - so an auto-installed netcoredbg is found without touching `PATH`.
 
 ### gdb / lldb (native)
 

@@ -37,6 +37,26 @@ boundary - netcoredbg is managed-only, cdb/lldb treat managed frames as opaque, 
 Studio does true mixed-mode but only interactively. `references/mixed-mode.md` gives the
 honest limits and the realistic workarounds.
 
+## Installing the debuggers
+
+`scripts/setup-debuggers.py` ensures the debuggers this skill drives are present. It is
+idempotent and platform-gated (Linux: netcoredbg/gdb/lldb; macOS: netcoredbg/lldb; Windows:
+netcoredbg/cdb/lldb), reuses `discovery.find_debugger` to skip anything already discoverable,
+and downloads netcoredbg (no package-manager distribution) into a canonical per-user dir that
+discovery also checks - so it is found without editing `PATH`.
+
+```bash
+python scripts/setup-debuggers.py            # ensure every relevant debugger is present
+python scripts/setup-debuggers.py --dry-run  # show what it would install, change nothing
+python scripts/setup-debuggers.py --only netcoredbg,lldb
+```
+
+Two paths cannot run fully unattended and are reported as `manual` with the exact command:
+password-required `sudo` (Linux) and `xcode-select --install` (macOS GUI installer). The
+umbrella skills installer can chain this after a skill install with
+`install-skills.sh --setup-debuggers` (or `.bat`). See `references/tooling-setup.md` for the
+manual per-platform playbook.
+
 ## Running the driver locally
 
 ```bash

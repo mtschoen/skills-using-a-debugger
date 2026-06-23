@@ -85,7 +85,8 @@ Pick by language and platform (build a debug build first - symbols are required)
 | native C/C++ | Windows (MSVC/clang-cl PDB) | cdb | `references/cdb-windows.md` |
 | native C/C++ | Windows (clang/DWARF) | lldb (IDE-bundled) | `references/lldb-native.md` |
 
-Not installed? Do not give up - detect then install per `references/tooling-setup.md`.
+Not installed? Do not give up - run `scripts/setup-debuggers.py` (idempotent, platform-gated,
+installs the missing ones), or follow `references/tooling-setup.md` to install one by hand.
 
 **cdb is the biggest trap - it shares NONE of gdb's verbs. Never write `break F:L`, `run`,
 or `info locals`/`locals` for cdb, and never invent a `-pdb` flag. cdb breaks with

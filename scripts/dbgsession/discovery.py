@@ -2,6 +2,25 @@ import glob
 import os
 import shutil
 import subprocess
+from pathlib import Path
+
+
+def netcoredbg_install_dir() -> Path | None:
+    """Canonical user directory where setup-debuggers.py extracts netcoredbg.
+
+    netcoredbg is not distributed by any package manager, so the setup script
+    downloads the release archive into a stable per-user location and detection
+    looks there. Derived from environment roots only (never a fixed home dir) so
+    the same code resolves correctly for any user on any host.
+    """
+    if os.name == "nt":
+        base = os.environ.get("LOCALAPPDATA")
+        return Path(base) / "Programs" / "netcoredbg" if base else None
+    xdg_data = os.environ.get("XDG_DATA_HOME")
+    if xdg_data:
+        return Path(xdg_data) / "netcoredbg"
+    home = os.environ.get("HOME")
+    return Path(home) / ".local" / "share" / "netcoredbg" if home else None
 
 
 def _health_check(path: str) -> bool:
@@ -21,7 +40,19 @@ def _find_gdb() -> str | None:
 
 
 def _find_netcoredbg() -> str | None:
-    return shutil.which("netcoredbg") or os.environ.get("NETCOREDBG")
+    found = shutil.which("netcoredbg") or os.environ.get("NETCOREDBG")
+    if found is not None:
+        return found
+    install_dir = netcoredbg_install_dir()
+    if install_dir is None:
+        return None
+    binary = "netcoredbg.exe" if os.name == "nt" else "netcoredbg"
+    # The release archive extracts to a netcoredbg/ subfolder holding the binary
+    # plus its managed support DLLs; check that layout and the flat one.
+    for candidate in (install_dir / "netcoredbg" / binary, install_dir / binary):
+        if candidate.is_file():
+            return str(candidate)
+    return None
 
 
 def _find_cdb() -> str | None:
