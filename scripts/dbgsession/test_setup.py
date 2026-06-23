@@ -1,4 +1,5 @@
 import os
+import subprocess
 import sys
 
 import pytest
@@ -120,6 +121,41 @@ def test_run_dry_run_does_not_install(monkeypatch):
 
     assert all(flags)  # dry_run propagated to every dispatch
     assert all(result.status == "dryrun" for result in results)
+
+
+def _winget_result(returncode, stderr=""):
+    return subprocess.CompletedProcess(args=[], returncode=returncode, stdout="", stderr=stderr)
+
+
+def test_install_lldb_windows_already_installed_is_present(monkeypatch):
+    monkeypatch.setattr(setup.shutil, "which", lambda name: "winget")
+    monkeypatch.setattr(
+        setup, "_run", lambda cmd: _winget_result(setup._WINGET_NO_APPLICABLE_UPGRADE)
+    )
+
+    result = setup.install_lldb_windows(dry_run=False)
+
+    assert result.kind == "lldb"
+    assert result.status == "present"
+
+
+def test_install_lldb_windows_real_failure_reports_failed(monkeypatch):
+    monkeypatch.setattr(setup.shutil, "which", lambda name: "winget")
+    monkeypatch.setattr(setup, "_run", lambda cmd: _winget_result(1, stderr="network down"))
+
+    result = setup.install_lldb_windows(dry_run=False)
+
+    assert result.status == "failed"
+    assert "network down" in result.detail
+
+
+def test_install_lldb_windows_success_reports_installed(monkeypatch):
+    monkeypatch.setattr(setup.shutil, "which", lambda name: "winget")
+    monkeypatch.setattr(setup, "_run", lambda cmd: _winget_result(0))
+
+    result = setup.install_lldb_windows(dry_run=False)
+
+    assert result.status == "installed"
 
 
 def test_install_netcoredbg_dry_run_is_inert(monkeypatch):

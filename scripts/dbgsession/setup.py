@@ -42,6 +42,9 @@ _NETCOREDBG_RELEASES_API = (
 )
 _WINDESKTOP_DEBUGGERS_FEATURE = "OptionId.WindowsDesktopDebuggers"
 _HTTP_TIMEOUT_SECONDS = 60
+# winget's APPINSTALLER_CLI_ERROR_UPDATE_NOT_APPLICABLE: package already
+# installed, no newer version available. LLVM is present, so treat it as success.
+_WINGET_NO_APPLICABLE_UPGRADE = 0x8A15002B
 
 
 class Result(NamedTuple):
@@ -254,6 +257,8 @@ def install_lldb_windows(dry_run: bool) -> Result:
     completed = _run(command)
     if completed.returncode == 0:
         return Result("lldb", "installed", "via winget LLVM.LLVM")
+    if completed.returncode == _WINGET_NO_APPLICABLE_UPGRADE:
+        return Result("lldb", "present", "winget reports LLVM already installed")
     return Result(
         "lldb",
         "failed",

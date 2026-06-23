@@ -99,6 +99,14 @@ def _find_lldb() -> str | None:
             "lldb.exe",
         )
         candidates.extend(sorted(glob.glob(pattern), reverse=True))
+    # winget installs LLVM under Program Files\LLVM\bin and does NOT add it to
+    # PATH, so a winget'd lldb is invisible to the shutil.which probe above.
+    for env_var in ("PROGRAMFILES", "PROGRAMFILES(X86)"):
+        program_files = os.environ.get(env_var)
+        if program_files:
+            llvm_lldb = os.path.join(program_files, "LLVM", "bin", "lldb.exe")
+            if os.path.isfile(llvm_lldb):
+                candidates.append(llvm_lldb)
     for candidate in candidates:
         if _health_check(candidate):
             return candidate
