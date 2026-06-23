@@ -6,6 +6,31 @@ Windows, Linux, macOS. Languages: C# (netcoredbg) and native C/C++ (lldb / gdb /
 
 See `SKILL.md` for the decision logic and `references/` for per-debugger detail.
 
+## Prerequisites (external tools the installer does NOT install)
+
+The skill installer ships only this skill's files (`SKILL.md`, `scripts/`, `references/`). The
+actual debugger binaries are **runtime prerequisites you install separately** -
+`scripts/setup-debuggers.py` installs them for you (see [Installing the debuggers](#installing-the-debuggers)),
+and `references/tooling-setup.md` is the authoritative detect-then-install guide. Quick summary:
+
+| Debugger | Install | Notes |
+|---|---|---|
+| netcoredbg (.NET) | Download release zip from `github.com/Samsung/netcoredbg/releases`; put on PATH or set `$NETCOREDBG` | No package manager. Needed for C#/Unity. |
+| gdb (native, Linux) | distro package (`apt`/`dnf`) | On Windows a MinGW gdb (e.g. Strawberry Perl) works for DWARF builds. |
+| lldb (native) | macOS: Xcode CLT; Linux: distro; Windows: `winget install LLVM.LLVM` | **Windows caveat below.** |
+| cdb (native, Windows) | Windows SDK "Debugging Tools for Windows" feature | Lands under `%ProgramFiles(x86)%\Windows Kits\10\Debuggers\x64\`; the driver discovers it there even when it is not on PATH. |
+
+The driver (`scripts/dbg-session.py`) also needs **Python 3** on PATH.
+
+> **Windows lldb caveat.** The LLVM-installer `lldb.exe` needs a matching **Python 3.11**
+> runtime (it embeds CPython); without `python311.dll` reachable it crashes on launch with
+> `unable to find 'python311.dll'`. Even with Python 3.11 present, the persistent-session
+> driver's lldb backend cannot drive the LLVM Windows build: it synchronizes on a
+> `script print(<marker>)` token, but that build buffers embedded-Python `print()` output and
+> only flushes it on the *next* command, so each `send` times out. Use **scripted/batch** mode
+> for lldb on Windows, prefer an IDE-bundled lldb (e.g. CLion's) for the live driver, or use
+> cdb for MSVC/clang-cl PDB builds. gdb and netcoredbg drive cleanly on Windows.
+
 ## Two interaction modes
 
 - **Scripted / batch** - run a debugger non-interactively, capture output. The reliable
