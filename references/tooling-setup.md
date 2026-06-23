@@ -69,12 +69,14 @@ health-check for lldb.
 > runtime reachable (the LLVM 22.x build links 3.11 specifically, not 3.12/3.13). Always verify
 > with `lldb --version` (non-zero exit or a crash means reject it) before trusting it.
 >
-> Even once `--version` passes, the **persistent-session driver cannot drive the LLVM Windows
-> lldb**: the lldb backend synchronizes on a `script print(<marker>)` token, but this build
-> buffers embedded-Python `print()` output and flushes it only on the *next* command, so every
-> `send` times out waiting for its marker. For lldb on Windows, use **scripted/batch** mode, an
-> IDE-bundled lldb (e.g. CLion's, which is the documented driver fallback), or cdb for
-> MSVC/clang-cl PDB builds. gdb and netcoredbg drive cleanly on Windows.
+> Even once `--version` passes, the **persistent-session driver cannot drive upstream LLVM lldb
+> 22.x on any OS** (not just Windows): the lldb backend synchronizes on a `script print(<marker>)`
+> token, and the 22.x build does not deliver that output when the driver expects it, so the live
+> `start`/`send` hangs until timeout. Confirmed on Windows (LLVM installer build) and Linux (Arch,
+> lldb 22.1.6). For these, use **scripted/batch** mode, an IDE-bundled or older (`< 22`) lldb
+> (e.g. CLion's, the documented driver fallback) for the live driver, or cdb for MSVC/clang-cl PDB
+> builds. gdb and netcoredbg drive cleanly everywhere. The live e2e test (`test_cli_e2e_lldb`) is
+> skipped on lldb `>= 22`; the driver fix is tracked in `docs/superpowers/plans`.
 
 ## Install per platform
 

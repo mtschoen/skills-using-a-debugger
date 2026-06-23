@@ -22,14 +22,14 @@ and `references/tooling-setup.md` is the authoritative detect-then-install guide
 
 The driver (`scripts/dbg-session.py`) also needs **Python 3** on PATH.
 
-> **Windows lldb caveat.** The LLVM-installer `lldb.exe` needs a matching **Python 3.11**
-> runtime (it embeds CPython); without `python311.dll` reachable it crashes on launch with
-> `unable to find 'python311.dll'`. Even with Python 3.11 present, the persistent-session
-> driver's lldb backend cannot drive the LLVM Windows build: it synchronizes on a
-> `script print(<marker>)` token, but that build buffers embedded-Python `print()` output and
-> only flushes it on the *next* command, so each `send` times out. Use **scripted/batch** mode
-> for lldb on Windows, prefer an IDE-bundled lldb (e.g. CLion's) for the live driver, or use
-> cdb for MSVC/clang-cl PDB builds. gdb and netcoredbg drive cleanly on Windows.
+> **lldb caveats.** *(Windows)* The LLVM-installer `lldb.exe` embeds CPython and needs a matching
+> **Python 3.11** runtime; without `python311.dll` reachable it crashes on launch with
+> `unable to find 'python311.dll'`. *(Any OS, lldb 22.x)* The persistent-session driver cannot
+> drive upstream **LLVM lldb 22.x**: its backend synchronizes on a `script print(<marker>)` token
+> that the 22.x build does not deliver when expected, so the live `start`/`send` times out
+> (confirmed on Windows and on Linux with lldb 22.1.6). For these, use **scripted/batch** mode,
+> an IDE-bundled or older (`< 22`) lldb (e.g. CLion's) for the live driver, or cdb for
+> MSVC/clang-cl PDB builds. gdb and netcoredbg drive cleanly everywhere.
 
 ## Two interaction modes
 
