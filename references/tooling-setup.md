@@ -67,16 +67,11 @@ health-check for lldb.
 > **lldb health-check (Windows).** A PATH `lldb` from the LLVM installer can crash on launch
 > with `unable to find 'python311.dll'` - it embeds CPython and needs a matching **Python 3.11**
 > runtime reachable (the LLVM 22.x build links 3.11 specifically, not 3.12/3.13). Always verify
-> with `lldb --version` (non-zero exit or a crash means reject it) before trusting it.
->
-> Even once `--version` passes, the **persistent-session driver cannot drive upstream LLVM lldb
-> 22.x on any OS** (not just Windows): the lldb backend synchronizes on a `script print(<marker>)`
-> token, and the 22.x build does not deliver that output when the driver expects it, so the live
-> `start`/`send` hangs until timeout. Confirmed on Windows (LLVM installer build) and Linux (Arch,
-> lldb 22.1.6). For these, use **scripted/batch** mode, an IDE-bundled or older (`< 22`) lldb
-> (e.g. CLion's, the documented driver fallback) for the live driver, or cdb for MSVC/clang-cl PDB
-> builds. gdb and netcoredbg drive cleanly everywhere. The live e2e test (`test_cli_e2e_lldb`) is
-> skipped on lldb `>= 22`; the driver fix is tracked in `docs/superpowers/plans`.
+> with `lldb --version` (non-zero exit or a crash means reject it) before trusting it. When the
+> runtime is missing the live driver's `start` just times out waiting for an lldb that never came
+> up; the health-check is what turns that into an actionable rejection. Once `lldb --version`
+> passes, the persistent-session driver drives upstream LLVM **lldb 22.x** fine - verified end to
+> end on Linux (Arch, lldb 22.1.6); gdb and netcoredbg drive cleanly everywhere.
 
 ## Install per platform
 

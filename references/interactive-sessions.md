@@ -44,6 +44,11 @@ dbg-session.py send  --session NAME "VERB ..."
 dbg-session.py stop  --session NAME
 ```
 
+- **`PROGRAM` is what the OS launches, not your source or assembly.** Native debuggers
+  (gdb/lldb/cdb) take the compiled binary directly: `-- ./hello`, `-- app.exe`. **netcoredbg
+  takes the .NET host with your assembly as its argument: `-- dotnet App.dll`** - NOT
+  `-- App.dll`. Passing the bare `.dll` leaves the breakpoint unresolved ("No executable
+  code ...") and the next `run` hangs. See `references/netcoredbg-dotnet.md`.
 - The transport is chosen automatically per debugger (lldb/cdb/netcoredbg use a pipe; gdb
   uses a PTY on Unix). You do not pick it.
 - The debugger binary is resolved by `discovery.find_debugger` (PATH, env overrides like

@@ -122,6 +122,11 @@ scripts/dbg-session.py stop  --session NAME
 One uniform verb language across all four debuggers; the server keeps the debuggee alive
 between calls. Details in `references/interactive-sessions.md`.
 
+`PROGRAM` is what the OS launches. Native debuggers take the compiled binary directly
+(`-- ./hello`); **netcoredbg takes the .NET host with the assembly as its argument
+(`-- dotnet App.dll`), never the bare `-- App.dll`** - the bare assembly leaves breakpoints
+unresolved and the next `run` hangs.
+
 ## netcoredbg: three command vocabularies, never mixed
 
 netcoredbg has two interpreters, and the driver adds a verb layer on top. Each command

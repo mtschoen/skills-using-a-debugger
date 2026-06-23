@@ -47,22 +47,38 @@ def _cmd_start(args: argparse.Namespace) -> int:
     child_env = {**os.environ, "_DBG_SERVER": "1"}
     child_argv = [sys.executable, __file__, *sys.argv[1:]]
 
-    if os.name == "nt":
-        CREATE_NEW_PROCESS_GROUP = 0x00000200
-        DETACHED_PROCESS = 0x00000008
-        subprocess.Popen(
-            child_argv,
-            env=child_env,
-            creationflags=CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS,
-            close_fds=True,
-        )
-    else:
-        subprocess.Popen(
-            child_argv,
-            env=child_env,
-            start_new_session=True,
-            close_fds=True,
-        )
+    # The server runs detached and outlives this command, so it must NOT inherit
+    # our stdin/stdout/stderr. When `start` is invoked with its output captured
+    # (pytest capture, subprocess.run(capture_output=True), any pipe), an
+    # inherited stdout fd held open by the long-lived child keeps the reader from
+    # ever seeing EOF - so the caller blocks until it times out even though the
+    # port file was written and the session is healthy. Point the child's streams
+    # at a per-session log instead (stdin at os.devnull). On Windows DETACHED_PROCESS
+    # already drops the std handles; redirecting there too is harmless and uniform.
+    server_log = session_dir / "server.log"
+    with open(os.devnull, "rb") as devnull, open(server_log, "ab") as log:
+        if os.name == "nt":
+            CREATE_NEW_PROCESS_GROUP = 0x00000200
+            DETACHED_PROCESS = 0x00000008
+            subprocess.Popen(
+                child_argv,
+                env=child_env,
+                creationflags=CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS,
+                close_fds=True,
+                stdin=devnull,
+                stdout=log,
+                stderr=subprocess.STDOUT,
+            )
+        else:
+            subprocess.Popen(
+                child_argv,
+                env=child_env,
+                start_new_session=True,
+                close_fds=True,
+                stdin=devnull,
+                stdout=log,
+                stderr=subprocess.STDOUT,
+            )
 
     if not _wait_for_port_file(session_dir):
         print(f"error: server did not write port file within {_PORT_WAIT_SECONDS}s", file=sys.stderr)

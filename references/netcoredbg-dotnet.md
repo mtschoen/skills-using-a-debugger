@@ -59,12 +59,20 @@ stopped, reason: exited, exit-code: 0
 ```
 
 The "No executable code" warning before the module loads is expected; `breakpoint modified`
-confirms the breakpoint resolved once the assembly loaded.
+confirms the breakpoint resolved once the assembly loaded. If you see the warning but **never**
+the `breakpoint modified` line, the breakpoint never bound - almost always because the program
+was launched as the bare assembly instead of `dotnet <app.dll>` (see the Driver note above);
+`run` will then hang.
 
 ## Driver / adapter note
 
-- `dbg-session.py --debugger netcoredbg` (transport: pipe, MI mode).
-- Launch: `netcoredbg --interpreter=mi -- dotnet <app.dll>`.
+- Operator command:
+  `dbg-session.py start --debugger netcoredbg --session NAME -- dotnet <app.dll>`. The program
+  is the **.NET host `dotnet`** and your assembly is its *argument*; passing the bare assembly
+  (`-- <app.dll>`) leaves the breakpoint unresolved ("No executable code ...", never followed by
+  `breakpoint modified`) and the next `run` then hangs waiting for a stop that never comes. The
+  driver supplies `--interpreter=mi` itself - do not type it.
+- Under the hood the driver launches `netcoredbg --interpreter=mi -- dotnet <app.dll>` (transport: pipe).
 - **MI is self-framing** - no marker needed. Gate on a parsed `*stopped` record with
   `reason="breakpoint-hit"`, then drain to the next `(gdb)` prompt.
 - **Entry-point skip**: after `-exec-run`, netcoredbg fires `*stopped,reason="entry-point-hit"`

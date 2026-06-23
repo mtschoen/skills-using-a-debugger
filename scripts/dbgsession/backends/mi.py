@@ -87,7 +87,19 @@ class MiBackend(Backend):
             argv = [path, "--interpreter=mi", "--", self._program, *self._program_args]
         else:
             path = self._debugger_path or "gdb"
-            argv = [path, "--interpreter=mi2", "--args", self._program, *self._program_args]
+            # Distros that build gdb with debuginfod (e.g. Arch) otherwise emit an
+            # interactive "Enable debuginfod for this session? (y or [n])" prompt on
+            # first run - even under MI - and the driver, which never answers it,
+            # hangs until the read times out. Disable it before any init file loads.
+            argv = [
+                path,
+                "--interpreter=mi2",
+                "-iex",
+                "set debuginfod enabled off",
+                "--args",
+                self._program,
+                *self._program_args,
+            ]
         self._transport = open_transport(argv, self._kind)
         self._transport.read_until(_has_prompt, _TIMEOUT)
 
