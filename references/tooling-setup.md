@@ -42,8 +42,16 @@ overrides (`$GDB` / `$LLDB` / `$NETCOREDBG` / `$CDB`), then platform roots, plus
 health-check for lldb.
 
 > **lldb health-check (Windows).** A PATH `lldb` from the LLVM installer can crash on launch
-> with `unable to find 'python311.dll'`. Always verify with `lldb --version` (non-zero exit
-> or a crash means reject it) before trusting it; fall back to an IDE-bundled lldb.
+> with `unable to find 'python311.dll'` - it embeds CPython and needs a matching **Python 3.11**
+> runtime reachable (the LLVM 22.x build links 3.11 specifically, not 3.12/3.13). Always verify
+> with `lldb --version` (non-zero exit or a crash means reject it) before trusting it.
+>
+> Even once `--version` passes, the **persistent-session driver cannot drive the LLVM Windows
+> lldb**: the lldb backend synchronizes on a `script print(<marker>)` token, but this build
+> buffers embedded-Python `print()` output and flushes it only on the *next* command, so every
+> `send` times out waiting for its marker. For lldb on Windows, use **scripted/batch** mode, an
+> IDE-bundled lldb (e.g. CLion's, which is the documented driver fallback), or cdb for
+> MSVC/clang-cl PDB builds. gdb and netcoredbg drive cleanly on Windows.
 
 ## Install per platform
 
