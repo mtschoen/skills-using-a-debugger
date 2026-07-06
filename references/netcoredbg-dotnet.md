@@ -50,7 +50,7 @@ persistent driver.
 
 Verified CLI batch output (trimmed of library-load noise):
 
-```
+```text
 Breakpoint 1 at Program.cs:1 --pending, warning: No executable code ...
 breakpoint modified,  Breakpoint 1 at .../Program.cs:1
 stopped, reason: breakpoint 1 hit, frame={Program...g__Add|0_0() at .../Program.cs:1}

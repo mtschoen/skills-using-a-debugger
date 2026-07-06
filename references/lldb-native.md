@@ -37,7 +37,7 @@ variables, which makes `frame variable` show `<optimized out>`.
 
 Verified stop + locals output:
 
-```
+```text
 (lldb) breakpoint set -f hello.cpp -l 3
 Breakpoint 1: where = hello`add(int,int) + 12 at hello.cpp:3, address = 0x...
 (lldb) run
@@ -71,7 +71,7 @@ Live mutation is confirmed: `expression sum = -1` returns `(int) $0 = -1`.
   `%LOCALAPPDATA%\Programs\CLion\bin\lldb\win\x64\bin\lldb.exe` (JetBrains CLion ships a
   working lldb 9.0 with its own Python). Android Studio / Rider ship only
   `LLDBFrontend.exe` (JetBrains protocol, not the raw CLI) - not usable.
-- **No bare prompt line in pipe mode**: the `(lldb) ` prompt is echoed onto the same line
+- **No bare prompt line in pipe mode**: the `(lldb)` prompt is echoed onto the same line
   as the next command, and after an async stop you see a doubled `(lldb) (lldb)`. Do not
   parse prompts for synchronization; gate on stop-reason content.
 - **`--no-use-colors`** to suppress ANSI codes when capturing output.

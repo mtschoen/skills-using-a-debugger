@@ -44,7 +44,7 @@ int len = s.Length;            // line 3 - NullReferenceException
 
 ### Via the live driver (MI)
 
-```
+```text
 $ dbg-session.py start --debugger netcoredbg --session nre -- dotnet App.dll
 $ dbg-session.py send --session nre "raw -break-exception-insert throw *"
 ^done,bkpt={number="1"}
@@ -61,7 +61,8 @@ The MI command goes through the `raw` verb; the backend's `*stopped` gate handle
 ### Via scripted/batch (CLI)
 
 `script.txt`:
-```
+
+```text
 catch throw *
 run
 ```
@@ -71,7 +72,8 @@ netcoredbg --interpreter=cli --command=script.txt -- dotnet App.dll
 ```
 
 Real output (trimmed):
-```
+
+```text
 ^done, Catchpoint 1 (throw)
 stopped, reason: exception received, name: System.NullReferenceException,
   exception: Object reference not set to an instance of an object.,
@@ -88,7 +90,8 @@ gdb -batch -ex "catch throw" -ex run -ex bt --args ./prog
 ```
 
 Real output (Linux):
-```
+
+```text
 Catchpoint 1 (exception thrown), 0x... in __cxa_throw () from /usr/lib/libstdc++.so.6
 #0  0x... in __cxa_throw () from /usr/lib/libstdc++.so.6
 #1  0x... in risky (x=-5) at th.cpp:3      # <- the real throw site, with the bad arg
@@ -103,14 +106,14 @@ showing both the location and the argument that triggered the throw.
 **not** in a Windows MSVC-ABI binary (clang++/clang-cl on Windows). There the breakpoint
 stays pending/unbound:
 
-```
+```text
 (lldb) break set -E c++
 Breakpoint 1: no locations (pending).
 ```
 
 But lldb still stops on the Windows structured exception that a C++ `throw` raises:
 
-```
+```text
 stop reason = Exception 0xe06d7363 encountered at address 0x...
 ```
 

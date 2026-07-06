@@ -42,14 +42,14 @@ lldb --no-use-colors -b \
 after `--` is the program plus its arguments. The `-s scriptfile` form takes the same
 commands from a file instead of repeated `-o` flags. Real output:
 
-```
+```text
 (lldb) breakpoint set -f hello.cpp -l 3
 Breakpoint 1: where = hello`add(int,int) + 12 at hello.cpp:3, address = 0x...
 (lldb) run
 Process 53172 stopped
 * thread #1, name = 'Main Thread', stop reason = breakpoint 1.1
     frame #0: 0x... hello`add(a=0, b=0) at hello.cpp:3
-   3   	    int sum = a + b;   // line 3 - breakpoint target
+   3       int sum = a + b;   // line 3 - breakpoint target
 (lldb) frame variable
 (int) a = 0
 (int) b = 0
@@ -75,10 +75,10 @@ gdb -batch \
 program and its arguments. Use `info args` for parameters and `info locals` for locals.
 Real output (Linux, GNU gdb 17.2):
 
-```
+```text
 Breakpoint 1 at 0x1143: file hello.cpp, line 3.
 Breakpoint 1, add (a=0, b=0) at hello.cpp:3
-3	    int sum = a + b;
+3       int sum = a + b;
 sum = 32767          # uninitialized - line 3 has not executed yet
 a = 0
 b = 0
@@ -89,7 +89,8 @@ b = 0
 cdb has no per-command flag; put the commands in a file and pass `-cf`:
 
 `script.txt`:
-```
+
+```text
 bp `hello.cpp:3`
 g
 dv
@@ -103,7 +104,7 @@ cdb -cf script.txt hello.exe
 `bp \`file:line\`` sets the breakpoint (the backticks are cdb's source-line syntax),
 `g` runs/continues, `dv` dumps local variables, `q` quits. Real output:
 
-```
+```text
 0:000> bp `hello.cpp:3`
 0:000> g
 Breakpoint 0 hit
@@ -127,7 +128,8 @@ netcoredbg --interpreter=cli --command=script.txt -- dotnet App.dll
 ```
 
 `script.txt`:
-```
+
+```text
 break Program.cs:1
 run
 print a
@@ -138,7 +140,7 @@ quit
 `--command=FILE` runs the commands and the program to completion. Real output (trimmed of
 library-load noise):
 
-```
+```text
 Breakpoint 1 at Program.cs:1 --pending, warning: No executable code ...
 ^running
 breakpoint modified,  Breakpoint 1 at .../Program.cs:1

@@ -11,7 +11,7 @@ for genuine exploration.
 
 ## The model
 
-```
+```text
 dbg-session.py start ...   ->  spawns a detached server process that owns ONE debugger
 dbg-session.py send  ...   ->  short-lived client; sends one verb, prints the reply
 dbg-session.py stop  ...   ->  tells the server to kill the debuggee and exit
@@ -38,7 +38,7 @@ to its native commands:
 
 ## CLI
 
-```
+```text
 dbg-session.py start --debugger {netcoredbg|gdb|lldb|cdb} --session NAME [--debugger-path PATH] -- PROGRAM [ARGS...]
 dbg-session.py send  --session NAME "VERB ..."
 dbg-session.py stop  --session NAME
@@ -64,7 +64,7 @@ Driving the `hello.cpp` target (the `add(a, b)` example from `scripted-batch.md`
 live lldb session. Each block is a *separate* `dbg-session.py` invocation - a separate
 agent tool call:
 
-```
+```text
 $ dbg-session.py start --debugger lldb --session demo -- ./hello
 
 $ dbg-session.py send --session demo "break hello.cpp:3"

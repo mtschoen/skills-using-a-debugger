@@ -35,9 +35,9 @@ g++ -g -O0 -o hello hello.cpp      # or: clang++ -g -O0 -o hello hello.cpp
 
 Verified stop + locals output (GNU gdb 17.2, Linux):
 
-```
+```text
 Breakpoint 1, add (a=0, b=0) at hello.cpp:3
-3	    int sum = a + b;
+3       int sum = a + b;
 (gdb) info args
 a = 0
 b = 0
@@ -48,7 +48,7 @@ sum = 32767      # uninitialized: line 3 has not executed yet
 ## Driver / adapter note
 
 - `dbg-session.py --debugger gdb`.
-- **Transport: PTY on Unix.** gdb's CLI buffers its `(gdb) ` prompt when stdout is not a
+- **Transport: PTY on Unix.** gdb's CLI buffers its `(gdb)` prompt when stdout is not a
   tty and deadlocks on a plain pipe (`stdbuf` does not fix it), so the driver runs it under
   `pty.openpty()`. PTY echoes input and adds CRLF/ANSI - the transport strips these.
 - **MI mode for the driver**: `gdb --interpreter=mi2`. MI is self-framing

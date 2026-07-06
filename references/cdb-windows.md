@@ -43,7 +43,7 @@ cdb uses terse single-letter commands. Backticks denote source-line syntax.
 
 Verified stop + locals output (clang-cl PDB target):
 
-```
+```text
 0:000> bp `hello.cpp:3`
 0:000> g
 Breakpoint 0 hit
@@ -63,7 +63,7 @@ hello!add+0xc:
 - `dbg-session.py --debugger cdb` (transport: pipe).
 - cdb is **fully synchronous** over stdin/stdout - the marker follows the command directly.
   Marker command: `.echo TOKEN` (cdb echoes it on its own line as `0:000> @@TOKEN@@`).
-- The prompt is `N:NNN> ` (e.g. `0:000> `). `start` drains all startup noise (module loads,
+- The prompt is `N:NNN>` (e.g. `0:000>`). `start` drains all startup noise (module loads,
   loader breakpoint) by sending `.echo TOKEN` first and reading to the token.
 - Batch form: `cdb -cf script.txt hello.exe` with `bp` / `g` / `dv` / `q` in the file
   (see `scripted-batch.md`).

@@ -113,7 +113,7 @@ is not possible per platform, and the realistic workarounds, see `references/mix
 
 ## The driver
 
-```
+```text
 scripts/dbg-session.py start --debugger {netcoredbg|gdb|lldb|cdb} --session NAME -- PROGRAM [ARGS...]
 scripts/dbg-session.py send  --session NAME "VERB ..."     # break FILE:LINE | run | continue | step | stepin | local NAME | bt | raw ...
 scripts/dbg-session.py stop  --session NAME
