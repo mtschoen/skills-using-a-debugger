@@ -15,7 +15,7 @@
       "bucket": "recognition",
       "framing": "cold",
       "kind": "single-turn",
-      "mock_repo": "./workspace/mock_repo",
+      "mock_repo": "./evals/fixtures/mock_repo",
       "prior_context": "Mid-session working on native/parse.cpp. parse_value returns the wrong length for some records, and you cannot tell which branch is responsible by reading the code.",
       "user": "the length is wrong for some inputs and I can't figure out where it goes off. what now?",
       "assertions": [
@@ -32,7 +32,7 @@
       "bucket": "execution",
       "framing": "warm",
       "kind": "single-turn",
-      "mock_repo": "./workspace/mock_repo",
+      "mock_repo": "./evals/fixtures/mock_repo",
       "prior_context": "Mid-session working on native/parse.cpp. parse_value returns the wrong length for some records.",
       "user": "I'm going to attach a debugger to parse_value to find where the length goes wrong. what should I actually break on and which locals should I read?",
       "assertions": [
@@ -48,7 +48,7 @@
       "bucket": "mode",
       "framing": "single",
       "kind": "single-turn",
-      "mock_repo": "./workspace/mock_repo",
+      "mock_repo": "./evals/fixtures/mock_repo",
       "prior_context": "You know the exact line you want to inspect (native/parse.cpp line 8, where value is computed). You want a capture you can paste into a CI log or an issue and reproduce later.",
       "user": "I know exactly which line I want to look at. I just want to grab the locals there once, reproducibly. how should I run the debugger?",
       "assertions": [
@@ -64,7 +64,7 @@
       "bucket": "mode",
       "framing": "single",
       "kind": "single-turn",
-      "mock_repo": "./workspace/mock_repo",
+      "mock_repo": "./evals/fixtures/mock_repo",
       "prior_context": "You do not yet know where the bug is. You expect to inspect some state, see what it tells you, then decide what to look at next - iterating several times within one run of the program.",
       "user": "I have no idea where this goes wrong yet. I'll need to poke around, read a value, then decide what to look at next based on what I see. what's the right setup?",
       "assertions": [
@@ -80,7 +80,7 @@
       "bucket": "selection",
       "framing": "single",
       "kind": "single-turn",
-      "mock_repo": "./workspace/mock_repo",
+      "mock_repo": "./evals/fixtures/mock_repo",
       "prior_context": "dotnet/InvoiceService.cs throws a NullReferenceException from TotalFor for some customer ids. The stack trace does not make the origin obvious. This is a .NET project built with dotnet.",
       "user": "InvoiceService.TotalFor throws a NullReferenceException for some ids and the stack doesn't tell me which reference is null. how do I debug this?",
       "assertions": [
@@ -97,7 +97,7 @@
       "bucket": "selection",
       "framing": "single",
       "kind": "single-turn",
-      "mock_repo": "./workspace/mock_repo",
+      "mock_repo": "./evals/fixtures/mock_repo",
       "prior_context": "On Windows. native/parse.cpp is built with MSVC / clang-cl, producing a .pdb next to the .exe. The program crashes and you want to break on parse_value and inspect arguments.",
       "user": "this is a Windows MSVC build with a .pdb. it crashes in the native parser. which debugger and how do I break on the function?",
       "assertions": [
@@ -113,7 +113,7 @@
       "bucket": "tooling",
       "framing": "single",
       "kind": "single-turn",
-      "mock_repo": "./workspace/mock_repo",
+      "mock_repo": "./evals/fixtures/mock_repo",
       "prior_context": "You decided netcoredbg is the right tool for the .NET NRE, but `netcoredbg` is not on PATH and `netcoredbg --version` fails.",
       "user": "you said use netcoredbg but it's not installed - `netcoredbg` isn't found. now what?",
       "assertions": [
@@ -129,7 +129,7 @@
       "bucket": "mixed-mode",
       "framing": "single",
       "kind": "single-turn",
-      "mock_repo": "./workspace/mock_repo",
+      "mock_repo": "./evals/fixtures/mock_repo",
       "prior_context": "dotnet/Interop.cs P/Invokes into the native parser (native/parse.cpp built as parser.dll). You are not sure whether the bad length comes from the managed marshalling or from inside native parse_value, and you want one debugger to step from the C# call straight into the native function.",
       "user": "can I just set one debugger to step from the C# Parse call straight into the native parse_value and watch both sides?",
       "assertions": [
@@ -145,7 +145,7 @@
       "bucket": "false-positive-guard",
       "framing": "cold",
       "kind": "single-turn",
-      "mock_repo": "./workspace/mock_repo",
+      "mock_repo": "./evals/fixtures/mock_repo",
       "prior_context": "scripts/format_date.py indexes a 0-11 month list with a 1-12 month number, so December throws IndexError and every month is off by one. The bug is visible by reading the five-line function.",
       "user": "format_date is returning the wrong month name and crashes on December. what's going on?",
       "assertions": [
@@ -161,7 +161,7 @@
       "bucket": "false-positive-guard",
       "framing": "warm",
       "kind": "single-turn",
-      "mock_repo": "./workspace/mock_repo",
+      "mock_repo": "./evals/fixtures/mock_repo",
       "prior_context": "scripts/format_date.py indexes a 0-11 month list with a 1-12 month number, so December throws IndexError and every month is off by one. The bug is visible by reading the five-line function.",
       "user": "format_date crashes on December and the month names are off by one. I was about to fire up a debugger and step through it - where should I set the breakpoint?",
       "assertions": [
@@ -177,7 +177,7 @@
       "bucket": "recognition",
       "framing": "cold",
       "kind": "single-turn",
-      "mock_repo": "./workspace/mock_repo",
+      "mock_repo": "./evals/fixtures/mock_repo",
       "prior_context": "dotnet/InvoiceService.cs throws a NullReferenceException deep in a call chain. The stack trace is long and you genuinely cannot tell which reference is null or which line raises it from reading the code - there are several candidates (c, c.Invoice, line.Amount). This is a .NET project.",
       "user": "an NRE comes from somewhere in this call chain but the stack is huge and I can't tell which line throws or which reference is null. how do I track it down?",
       "assertions": [
@@ -194,7 +194,7 @@
       "bucket": "technique",
       "framing": "warm",
       "kind": "single-turn",
-      "mock_repo": "./workspace/mock_repo",
+      "mock_repo": "./evals/fixtures/mock_repo",
       "prior_context": "dotnet/InvoiceService.cs throws a NullReferenceException deep in a call chain with a long stack. This is a .NET project and you have netcoredbg attached.",
       "user": "I've got netcoredbg on this NRE but I don't know which line throws or which reference is null. how do I set the breakpoint so it stops me right at the throw?",
       "assertions": [
@@ -210,7 +210,7 @@
       "bucket": "recognition",
       "framing": "cold",
       "kind": "single-turn",
-      "mock_repo": "./workspace/mock_repo",
+      "mock_repo": "./evals/fixtures/mock_repo",
       "prior_context": "dotnet/InvoiceService.cs throws a NullReferenceException from TotalFor, but only for one customer id out of tens of thousands processed in a nightly batch that a separate job runner launches. You cannot reproduce it locally, and you cannot attach a debugger to the batch process before it reaches the bad id. This is a .NET project built with dotnet.",
       "user": "the NRE only happens for one id buried in a 40k-id nightly batch that a job runner kicks off. I can't reproduce it locally and I can't attach in time to catch the one bad id. how do I debug this?",
       "assertions": [
@@ -227,7 +227,7 @@
       "bucket": "technique",
       "framing": "warm",
       "kind": "single-turn",
-      "mock_repo": "./workspace/mock_repo",
+      "mock_repo": "./evals/fixtures/mock_repo",
       "prior_context": "dotnet/InvoiceService.cs throws a NullReferenceException from TotalFor for one customer id out of tens of thousands in a nightly batch launched by a job runner you cannot attach to in time. This is a .NET project built with dotnet.",
       "user": "I want to drop a breakpoint right in the C# source that only fires for the one bad customer id, since the job runner won't let me attach in time. what's the call and how do I guard it?",
       "assertions": [
