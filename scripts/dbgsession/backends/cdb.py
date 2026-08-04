@@ -1,5 +1,6 @@
 """cdb backend using pipe transport with .echo-token synchronisation."""
 
+import contextlib
 import re
 import sys
 from pathlib import Path
@@ -57,9 +58,15 @@ class CdbBackend(Backend):
     def start(self) -> None:
         argv = [self._debugger_path, self._program, *self._program_args]
         self._transport = open_transport(argv, "pipe")
-        token = self._next_token()
-        self._transport.write(f".echo {token}\n")
-        self._transport.read_until(_has_token(token), _TIMEOUT)
+        try:
+            token = self._next_token()
+            self._transport.write(f".echo {token}\n")
+            self._transport.read_until(_has_token(token), _TIMEOUT)
+        except Exception:
+            with contextlib.suppress(OSError):
+                self._transport.close()
+            self._transport = None
+            raise
 
     def set_breakpoint(self, file: str, line: int) -> str:
         result = self._run_sync(f"bp `{file}:{line}`")

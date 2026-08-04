@@ -1,5 +1,6 @@
 """GDB/MI backend for netcoredbg and gdb."""
 
+import contextlib
 import sys
 from pathlib import Path
 
@@ -101,7 +102,13 @@ class MiBackend(Backend):
                 *self._program_args,
             ]
         self._transport = open_transport(argv, self._kind)
-        self._transport.read_until(_has_prompt, _TIMEOUT)
+        try:
+            self._transport.read_until(_has_prompt, _TIMEOUT)
+        except Exception:
+            with contextlib.suppress(OSError):
+                self._transport.close()
+            self._transport = None
+            raise
 
     def _run_until_stop(self, command: str) -> str:
         self._transport.write(command + "\n")

@@ -1,5 +1,6 @@
 """lldb CLI backend using pipe transport with content-gated async stop detection."""
 
+import contextlib
 import re
 import sys
 from pathlib import Path
@@ -67,7 +68,22 @@ class LldbCliBackend(Backend):
         argv = [self._debugger_path, "--no-use-colors", self._program]
         if self._program_args:
             argv += ["--", *self._program_args]
-        self._transport = open_transport(argv, "pipe")
+        self._transport = open_transport(argv, self._kind)
+        # Synchronize on the lldb REPL coming up, the same way MiBackend waits
+        # for "(gdb)" and CdbBackend waits for its token echo - otherwise the
+        # caller's first command can race lldb's startup banner.
+        try:
+            token = self._next_token()
+            self._transport.write(f'script print("{token}")\n')
+            self._transport.read_until(
+                lambda text: any(line.strip() == token for line in text.splitlines()),
+                _TIMEOUT,
+            )
+        except Exception:
+            with contextlib.suppress(OSError):
+                self._transport.close()
+            self._transport = None
+            raise
 
     def set_breakpoint(self, file: str, line: int) -> str:
         return self._run_sync(f"breakpoint set --file {file} --line {line}")
