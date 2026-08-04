@@ -3,8 +3,8 @@
 When C# calls into a native DLL through P/Invoke, you may want one debugger to follow
 execution across the boundary - step from the managed call site into the native function
 with both frame sets visible. This reference is the honest verdict on what is actually
-possible, established by a spike against a real dual-toolchain project (file-wizard:
-managed C# entry calling `MFTLibNative.dll`).
+possible, established by a spike against a real dual-toolchain project (managed C# entry
+calling a native DLL).
 
 ## The verdict
 
@@ -23,7 +23,7 @@ native frames but treat managed frames as opaque. Visual Studio does true mixed-
 debugging but only interactively - it is not driveable over a pipe, so it does not fit the
 scripted/driver model this skill uses.
 
-This was confirmed concretely: file-wizard builds cleanly (native `MFTLibNative.dll` + `.pdb`
+This was confirmed concretely: the project builds cleanly (native DLL + `.pdb`
 via MSBuild v143; managed via `dotnet`; the native DLL copied next to the managed entry).
 P/Invoke exports are present and bindable. But no scriptable single tool follows the call
 through the P/Invoke thunk into native code with symbols on both sides.
