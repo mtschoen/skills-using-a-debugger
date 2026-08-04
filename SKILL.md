@@ -90,8 +90,9 @@ target while you type. Prefer an offline snapshot: `createdump --withheap PID` (
 with the .NET runtime; snapshots a multi-GB process in seconds, target keeps running)
 then `dotnet-dump analyze` with SOS commands (`dumpheap -type`, `gcroot`, `dumpobj`,
 `eeheap -loader`) - SOS reads managed state through the DAC, so it works on release
-runtimes with no native symbols. PID trap: `pgrep -f | head -1` often returns your own
-shell wrapper - use `pgrep -x`. Full workflow, SOS setup, and gcroot-at-scale techniques
+runtimes with no native symbols. PID trap: `pgrep -f NAME | head -1` often returns your
+own shell wrapper, not the target - use `pgrep -x BINARY`. Full workflow, SOS setup, and
+gcroot-at-scale techniques
 in `references/memory-forensics.md`.
 
 ## Debugger selection
