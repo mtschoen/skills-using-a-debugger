@@ -1,6 +1,6 @@
 ---
 name: using-a-debugger
-description: "Use when a bug needs more than print statements - set breakpoints, step, and read live program state in C#/C++ (and similar native/managed runtimes). Covers scripted/batch debugging and a persistent live-session driver, cross-platform (lldb/gdb/cdb/netcoredbg). Triggers: a crash or wrong value you cannot localize by reading code, an exception with no clear origin, or wanting to inspect memory/locals at a specific point."
+description: "Use for ANY debugger or memory-forensics work in C#/C++ (and similar native/managed runtimes) - not just bug hunts: verifying runtime behavior, inspecting a healthy process, heap/GC analysis (SOS, dumpheap, gcroot, \"who holds a reference to this object\"), and post-mortem core-dump analysis. Load BEFORE running lldb, gdb, cdb, netcoredbg, dotnet-dump, or createdump - even for a one-shot batch command. Covers scripted/batch debugging, a persistent live-session driver, and the classic traps: hanging attach on large binaries (symbol preload), live-attach vs core-dump tradeoffs, finding the right PID. Triggers: a crash or wrong value you cannot localize by reading code, an exception with no clear origin, wanting to inspect memory/locals at a specific point, or a leak/rooting question."
 ---
 
 # Using a Debugger
@@ -12,10 +12,16 @@ converging.
 
 ## When to use
 
+**Load this skill before running `lldb`, `gdb`, `cdb`, `netcoredbg`, `dotnet-dump`, or
+`createdump` - even for a one-shot batch command.** The situations it serves:
+
 - A crash or wrong value you cannot localize by reading the code.
 - An exception with no clear origin.
 - You need to inspect locals, arguments, or memory at a specific point in execution.
 - Print-debugging would mean many rebuild-and-rerun cycles to bisect the state.
+- **Not a bug at all**: verifying claims about runtime behavior, inspecting a *healthy*
+  process, or answering "who is holding a reference to this object?" (leaks, GC roots,
+  heap composition). See `references/memory-forensics.md`.
 
 ## When NOT to use
 
@@ -73,6 +79,21 @@ follow state interactively - where you look next depends on what you just read. 
 driver (`scripts/dbg-session.py`) holds the debuggee alive across separate tool calls. See
 `references/interactive-sessions.md`.
 
+## Memory forensics: dumps over live attach
+
+When the question is about *state*, not *control flow* - leaks, GC roots, heap
+composition, "what pins this object" - you usually do not want a live session at all.
+Live attach to a large debug binary can hang for 10+ minutes on symbol preload
+(mitigation: `settings set target.preload-symbols false` /
+`settings set symbols.load-on-demand true` before `process attach`), and it freezes the
+target while you type. Prefer an offline snapshot: `createdump --withheap PID` (ships
+with the .NET runtime; snapshots a multi-GB process in seconds, target keeps running)
+then `dotnet-dump analyze` with SOS commands (`dumpheap -type`, `gcroot`, `dumpobj`,
+`eeheap -loader`) - SOS reads managed state through the DAC, so it works on release
+runtimes with no native symbols. PID trap: `pgrep -f | head -1` often returns your own
+shell wrapper - use `pgrep -x`. Full workflow, SOS setup, and gcroot-at-scale techniques
+in `references/memory-forensics.md`.
+
 ## Debugger selection
 
 Pick by language and platform (build a debug build first - symbols are required):
@@ -80,6 +101,7 @@ Pick by language and platform (build a debug build first - symbols are required)
 | Language | Platform | Debugger | Reference |
 |---|---|---|---|
 | .NET (C#/F#/VB) | any | netcoredbg | `references/netcoredbg-dotnet.md` |
+| .NET memory/leak forensics | any | dotnet-dump + SOS | `references/memory-forensics.md` |
 | native C/C++ | Linux | gdb (or lldb) | `references/gdb-native.md` |
 | native C/C++ | macOS | lldb | `references/lldb-native.md` |
 | native C/C++ | Windows (MSVC/clang-cl PDB) | cdb | `references/cdb-windows.md` |
