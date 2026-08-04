@@ -71,12 +71,17 @@ class LldbCliBackend(Backend):
         # Synchronize on the lldb REPL coming up, the same way MiBackend waits
         # for "(gdb)" and CdbBackend waits for its token echo - otherwise the
         # caller's first command can race lldb's startup banner.
-        token = self._next_token()
-        self._transport.write(f'script print("{token}")\n')
-        self._transport.read_until(
-            lambda text: any(line.strip() == token for line in text.splitlines()),
-            _TIMEOUT,
-        )
+        try:
+            token = self._next_token()
+            self._transport.write(f'script print("{token}")\n')
+            self._transport.read_until(
+                lambda text: any(line.strip() == token for line in text.splitlines()),
+                _TIMEOUT,
+            )
+        except Exception:
+            self._transport.close()
+            self._transport = None
+            raise
 
     def set_breakpoint(self, file: str, line: int) -> str:
         return self._run_sync(f"breakpoint set --file {file} --line {line}")

@@ -101,7 +101,12 @@ class MiBackend(Backend):
                 *self._program_args,
             ]
         self._transport = open_transport(argv, self._kind)
-        self._transport.read_until(_has_prompt, _TIMEOUT)
+        try:
+            self._transport.read_until(_has_prompt, _TIMEOUT)
+        except Exception:
+            self._transport.close()
+            self._transport = None
+            raise
 
     def _run_until_stop(self, command: str) -> str:
         self._transport.write(command + "\n")
