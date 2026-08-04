@@ -32,8 +32,30 @@ class _TimeoutTransport:
         self.closed = True
 
 
+class _TimeoutTransportCloseRaises(_TimeoutTransport):
+    """Like _TimeoutTransport, but close() itself fails (e.g. the child process
+    already exited between poll() and kill()) - the original TimeoutError must
+    still win, not the close() failure."""
+
+    def close(self):
+        self.closed = True
+        raise OSError("process already exited")
+
+
 def test_start_closes_transport_and_reraises_on_sync_timeout(monkeypatch):
     fake = _TimeoutTransport()
+    monkeypatch.setattr(mi_module, "open_transport", lambda argv, kind: fake)
+    backend = MiBackend("netcoredbg", "pipe", "unused-program", [], "netcoredbg")
+
+    with pytest.raises(TimeoutError):
+        backend.start()
+
+    assert fake.closed
+    assert backend._transport is None
+
+
+def test_start_reraises_original_error_when_close_also_fails(monkeypatch):
+    fake = _TimeoutTransportCloseRaises()
     monkeypatch.setattr(mi_module, "open_transport", lambda argv, kind: fake)
     backend = MiBackend("netcoredbg", "pipe", "unused-program", [], "netcoredbg")
 

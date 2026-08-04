@@ -1,5 +1,6 @@
 """lldb CLI backend using pipe transport with content-gated async stop detection."""
 
+import contextlib
 import re
 import sys
 from pathlib import Path
@@ -67,7 +68,7 @@ class LldbCliBackend(Backend):
         argv = [self._debugger_path, "--no-use-colors", self._program]
         if self._program_args:
             argv += ["--", *self._program_args]
-        self._transport = open_transport(argv, "pipe")
+        self._transport = open_transport(argv, self._kind)
         # Synchronize on the lldb REPL coming up, the same way MiBackend waits
         # for "(gdb)" and CdbBackend waits for its token echo - otherwise the
         # caller's first command can race lldb's startup banner.
@@ -79,7 +80,8 @@ class LldbCliBackend(Backend):
                 _TIMEOUT,
             )
         except Exception:
-            self._transport.close()
+            with contextlib.suppress(OSError):
+                self._transport.close()
             self._transport = None
             raise
 
