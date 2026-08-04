@@ -1,28 +1,19 @@
 using System.Runtime.InteropServices;
-using System.Text;
 
-namespace MockRepo;
+namespace Billing;
 
-// P/Invokes into native/parse.cpp, built as parser.dll (or libparser.so /
-// libparser.dylib on other platforms), to reuse the native record parser
-// from managed code.
-internal static class NativeParser
+// Managed wrapper over the native parser in native/parse.cpp (built as parser.dll).
+// A returned length is sometimes wrong; unclear whether the bug is in the managed
+// marshalling or inside the native parse_value.
+public static class NativeParser
 {
-    [DllImport("parser", EntryPoint = "parse_value", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int ParseValueNative(
-        byte[] rec,
-        System.UIntPtr recLen,
-        byte[] outBuf,
-        out System.UIntPtr outLen);
+    [DllImport("parser", EntryPoint = "parse_value")]
+    private static extern nint parse_value(string record, out int outLen);
 
-    public static string Parse(byte[] record)
+    public static (string value, int length) Parse(string record)
     {
-        var outBuf = new byte[record.Length];
-        int status = ParseValueNative(record, (System.UIntPtr)record.Length, outBuf, out var outLen);
-        if (status != 0)
-        {
-            return null;
-        }
-        return Encoding.UTF8.GetString(outBuf, 0, (int)outLen);
+        nint ptr = parse_value(record, out int len);
+        string value = Marshal.PtrToStringAnsi(ptr) ?? "";
+        return (value, len);
     }
 }

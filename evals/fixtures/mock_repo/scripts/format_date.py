@@ -1,11 +1,5 @@
-MONTHS = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
-]
-
-
 def format_date(year, month, day):
-    """Return a human-readable date string, e.g. 'March 5, 2026'."""
-    month_name = MONTHS[month]
-    date_str = f"{month_name} {day}, {year}"
-    return date_str
+    # Off-by-one: month list is indexed 0-11 but month comes in 1-12.
+    months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+              "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    return f"{months[month]} {day}, {year}"

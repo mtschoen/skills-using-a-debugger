@@ -1,46 +1,35 @@
 using System.Collections.Generic;
-using System.Linq;
 
-namespace MockRepo;
-
-public class InvoiceLine
-{
-    public decimal Amount { get; set; }
-}
-
-public class Invoice
-{
-    public List<InvoiceLine> Lines { get; set; } = new();
-}
-
-public class Customer
-{
-    public int Id { get; set; }
-    public Invoice Invoice { get; set; }
-}
+namespace Billing;
 
 public class InvoiceService
 {
-    private readonly List<Customer> _customers;
+    private readonly Dictionary<string, Customer> _customers = new();
 
-    public InvoiceService(List<Customer> customers)
+    // Throws NullReferenceException for some customer ids - origin unclear from the stack.
+    public decimal TotalFor(string customerId)
     {
-        _customers = customers;
-    }
-
-    // Throws NullReferenceException for some customer ids:
-    // - c is null if customerId doesn't match any customer
-    // - c.Invoice is null for customers that were created without one
-    // - line.Amount is fine as-is, but is a plausible red herring while
-    //   reading the stack trace
-    public decimal TotalFor(int customerId)
-    {
-        var c = _customers.FirstOrDefault(x => x.Id == customerId);
+        Customer c = _customers.GetValueOrDefault(customerId);
         decimal total = 0;
-        foreach (var line in c.Invoice.Lines)
+        foreach (var line in c.Invoice.Lines)   // c or c.Invoice may be null
         {
             total += line.Amount;
         }
         return total;
     }
+}
+
+public class Customer
+{
+    public Invoice Invoice { get; set; }
+}
+
+public class Invoice
+{
+    public List<LineItem> Lines { get; set; } = new();
+}
+
+public class LineItem
+{
+    public decimal Amount { get; set; }
 }
