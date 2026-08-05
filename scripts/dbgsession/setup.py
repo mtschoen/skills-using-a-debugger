@@ -9,7 +9,7 @@ Pure decision functions (platform target list, release-asset selection) are kept
 separate from the imperative install steps so the decision surface is unit
 testable without privileged commands or network access. Standard library only,
 because the skill ships standalone into wherever the agent harness reads skills
-from (e.g. ``~/.claude/skills`` for Claude Code).
+from.
 """
 
 import json
