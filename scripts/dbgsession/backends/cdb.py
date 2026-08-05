@@ -22,9 +22,7 @@ def _has_token(token: str):
 
 
 def _strip_token_lines(text: str, token: str) -> str:
-    return "".join(
-        line for line in text.splitlines(keepends=True) if token not in line
-    )
+    return "".join(line for line in text.splitlines(keepends=True) if token not in line)
 
 
 class CdbBackend(Backend):

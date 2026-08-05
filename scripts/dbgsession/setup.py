@@ -38,9 +38,7 @@ _TARGETS_BY_SYSTEM = {
     "windows": ("netcoredbg", "cdb", "lldb"),
 }
 
-_NETCOREDBG_RELEASES_API = (
-    "https://api.github.com/repos/Samsung/netcoredbg/releases/latest"
-)
+_NETCOREDBG_RELEASES_API = "https://api.github.com/repos/Samsung/netcoredbg/releases/latest"
 _WINDESKTOP_DEBUGGERS_FEATURE = "OptionId.WindowsDesktopDebuggers"
 _HTTP_TIMEOUT_SECONDS = 60
 # winget's APPINSTALLER_CLI_ERROR_UPDATE_NOT_APPLICABLE: package already
@@ -112,9 +110,7 @@ def _extract_archive(archive: Path, dest: Path) -> None:
 def install_netcoredbg(dry_run: bool) -> Result:
     substring = netcoredbg_asset_substring(platform.system(), platform.machine())
     if substring is None:
-        return Result(
-            "netcoredbg", "failed", f"no release asset for {platform.machine()}"
-        )
+        return Result("netcoredbg", "failed", f"no release asset for {platform.machine()}")
     install_dir = netcoredbg_install_dir()
     if install_dir is None:
         return Result(
@@ -123,16 +119,13 @@ def install_netcoredbg(dry_run: bool) -> Result:
             "could not resolve an install directory from the environment",
         )
     if dry_run:
-        return Result(
-            "netcoredbg", "dryrun", f"download '{substring}' asset into {install_dir}"
-        )
+        return Result("netcoredbg", "dryrun", f"download '{substring}' asset into {install_dir}")
     try:
         release = json.loads(
             _http_get(_NETCOREDBG_RELEASES_API, accept="application/vnd.github+json")
         )
         assets = {
-            asset["name"]: asset["browser_download_url"]
-            for asset in release.get("assets", [])
+            asset["name"]: asset["browser_download_url"] for asset in release.get("assets", [])
         }
         asset_name = select_asset(list(assets), substring)
         if asset_name is None:
@@ -153,9 +146,7 @@ def install_netcoredbg(dry_run: bool) -> Result:
             _extract_archive(archive, install_dir)
         except (tarfile.TarError, zipfile.BadZipFile, OSError) as exc:
             return Result("netcoredbg", "failed", f"extract failed: {exc}")
-    return Result(
-        "netcoredbg", "installed", f"extracted {asset_name} into {install_dir}"
-    )
+    return Result("netcoredbg", "installed", f"extracted {asset_name} into {install_dir}")
 
 
 _LINUX_PACKAGE_MANAGERS = (
@@ -188,9 +179,7 @@ def install_native_linux(kind: str, dry_run: bool) -> Result:
             "failed",
             completed.stderr.strip() or f"{tool} exited {completed.returncode}",
         )
-    return Result(
-        kind, "manual", "no supported package manager (apt-get/dnf/pacman/zypper) found"
-    )
+    return Result(kind, "manual", "no supported package manager (apt-get/dnf/pacman/zypper) found")
 
 
 def install_lldb_macos(dry_run: bool) -> Result:
@@ -200,9 +189,7 @@ def install_lldb_macos(dry_run: bool) -> Result:
         completed = _run(["brew", "install", "llvm"])
         if completed.returncode == 0:
             return Result("lldb", "installed", "via Homebrew llvm")
-        return Result(
-            "lldb", "failed", completed.stderr.strip() or "brew install llvm failed"
-        )
+        return Result("lldb", "failed", completed.stderr.strip() or "brew install llvm failed")
     if dry_run:
         return Result("lldb", "dryrun", "xcode-select --install")
     completed = _run(["xcode-select", "--install"])
@@ -276,11 +263,7 @@ def install_for(kind: str, system: str, dry_run: bool) -> Result:
     if system == "darwin":
         return install_lldb_macos(dry_run)
     if system == "windows":
-        return (
-            install_cdb_windows(dry_run)
-            if kind == "cdb"
-            else install_lldb_windows(dry_run)
-        )
+        return install_cdb_windows(dry_run) if kind == "cdb" else install_lldb_windows(dry_run)
     return Result(kind, "failed", f"no installer for {kind} on {system}")
 
 

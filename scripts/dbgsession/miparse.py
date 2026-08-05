@@ -131,7 +131,7 @@ def parse_mi_line(line: str) -> dict:
             field_text = ""
         else:
             cls = rest[:comma]
-            field_text = rest[comma + 1:]
+            field_text = rest[comma + 1 :]
         return {"kind": kind, "class": cls, "fields": _scan_fields(field_text)}
 
     if prefix and prefix[0] in _STREAM_PREFIXES:

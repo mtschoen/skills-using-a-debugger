@@ -93,9 +93,7 @@ def _make_backend(debugger: str, program: str, program_args: list, debugger_path
     from backends.mi import MiBackend
 
     backend_table = {
-        "netcoredbg": lambda: MiBackend(
-            "netcoredbg", "pipe", program, program_args, debugger_path
-        ),
+        "netcoredbg": lambda: MiBackend("netcoredbg", "pipe", program, program_args, debugger_path),
         "gdb": lambda: MiBackend(
             "gdb",
             "pty" if os.name != "nt" else "pipe",

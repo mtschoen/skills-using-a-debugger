@@ -159,6 +159,7 @@ class MiBackend(Backend):
                 self._transport.write("-gdb-exit\n")
             except OSError as error:
                 import sys as _sys
+
                 print(f"stop: -gdb-exit write failed: {error}", file=_sys.stderr)
             self._transport.close()
             self._transport = None

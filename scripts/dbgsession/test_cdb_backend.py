@@ -64,6 +64,8 @@ def test_start_reraises_original_error_when_close_also_fails(monkeypatch):
 
     assert fake.closed
     assert backend._transport is None
+
+
 CLANG_CL = shutil.which("clang-cl") or (
     "C:/Program Files/LLVM/bin/clang-cl.exe"
     if Path("C:/Program Files/LLVM/bin/clang-cl.exe").exists()

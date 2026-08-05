@@ -4,6 +4,11 @@
 # instead of what CI, which sees this repo alone, actually checks.
 line-length = 100
 
+# The mock repo is test data, not authored code: it is deliberately buggy, and
+# its shape is asserted on ("the bug is visible by reading the five-line
+# function" in evals.json). Reformatting it would rewrite the fixture.
+exclude = ["evals/fixtures/**"]
+
 [lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "RET", "PIE", "C4", "RUF"]
 

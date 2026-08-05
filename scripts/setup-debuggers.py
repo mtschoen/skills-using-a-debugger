@@ -20,9 +20,7 @@ from setup import run
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Install the debuggers used by using-a-debugger"
-    )
+    parser = argparse.ArgumentParser(description="Install the debuggers used by using-a-debugger")
     parser.add_argument(
         "--dry-run",
         action="store_true",

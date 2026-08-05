@@ -55,9 +55,7 @@ def test_run_skips_present_debuggers(monkeypatch):
     monkeypatch.setattr(
         setup,
         "install_for",
-        lambda kind, system, dry_run: (
-            installs.append(kind) or Result(kind, "installed", "")
-        ),
+        lambda kind, system, dry_run: installs.append(kind) or Result(kind, "installed", ""),
     )
 
     results = setup.run(report=lambda _line: None)
@@ -76,9 +74,7 @@ def test_run_installs_only_missing(monkeypatch):
     monkeypatch.setattr(
         setup,
         "install_for",
-        lambda kind, system, dry_run: (
-            installed.append(kind) or Result(kind, "installed", "")
-        ),
+        lambda kind, system, dry_run: installed.append(kind) or Result(kind, "installed", ""),
     )
 
     results = setup.run(report=lambda _line: None)
@@ -95,9 +91,7 @@ def test_run_only_filters_targets(monkeypatch):
     monkeypatch.setattr(
         setup,
         "install_for",
-        lambda kind, system, dry_run: (
-            seen.append(kind) or Result(kind, "installed", "")
-        ),
+        lambda kind, system, dry_run: seen.append(kind) or Result(kind, "installed", ""),
     )
 
     setup.run(only=["lldb"], report=lambda _line: None)
@@ -112,9 +106,7 @@ def test_run_dry_run_does_not_install(monkeypatch):
     monkeypatch.setattr(
         setup,
         "install_for",
-        lambda kind, system, dry_run: (
-            flags.append(dry_run) or Result(kind, "dryrun", "")
-        ),
+        lambda kind, system, dry_run: flags.append(dry_run) or Result(kind, "dryrun", ""),
     )
 
     results = setup.run(dry_run=True, report=lambda _line: None)

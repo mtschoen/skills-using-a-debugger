@@ -181,15 +181,11 @@ def invoke_grader(prompt: str, model: str | None, timeout: int) -> dict:
     inner_text = wrapper.get("result", "") if isinstance(wrapper, dict) else ""
     payload = _extract_json_object(inner_text)
     if payload is None:
-        return {
-            "_error": f"grader inner payload has no JSON object; raw={inner_text[:500]}"
-        }
+        return {"_error": f"grader inner payload has no JSON object; raw={inner_text[:500]}"}
     try:
         return json.loads(payload)
     except json.JSONDecodeError as e:
-        return {
-            "_error": f"grader inner JSON failed to parse: {e}; raw={payload[:500]}"
-        }
+        return {"_error": f"grader inner JSON failed to parse: {e}; raw={payload[:500]}"}
 
 
 def _extract_json_object(text: str) -> str | None:
@@ -204,9 +200,7 @@ def _extract_json_object(text: str) -> str | None:
     stripped = text.strip()
     if stripped.startswith("```"):
         lines = stripped.splitlines()
-        stripped = "\n".join(
-            line for line in lines if not line.strip().startswith("```")
-        )
+        stripped = "\n".join(line for line in lines if not line.strip().startswith("```"))
     # Find first { and walk balanced braces, respecting strings
     start = stripped.find("{")
     if start < 0:
@@ -242,9 +236,7 @@ def load_evals(evals_path: Path) -> tuple[dict, dict]:
     return by_id, universal
 
 
-def discover_units(
-    responses_dir: Path, by_id: dict, universal: str
-) -> list[GradingUnit]:
+def discover_units(responses_dir: Path, by_id: dict, universal: str) -> list[GradingUnit]:
     units = []
     for eval_dir in sorted(responses_dir.iterdir()):
         if not eval_dir.is_dir() or not eval_dir.name.startswith("eval-"):
@@ -333,23 +325,15 @@ def effective_pass_rate(record: dict) -> float | None:
 def summarize(records: list[dict]) -> dict:
     total = len(records)
     errored = [r for r in records if "_error" in r]
-    universal_failures = [
-        r for r in records if r.get("universal", {}).get("passed") is False
-    ]
+    universal_failures = [r for r in records if r.get("universal", {}).get("passed") is False]
 
-    pass_rates = [
-        rate for r in records if (rate := effective_pass_rate(r)) is not None
-    ]
+    pass_rates = [rate for r in records if (rate := effective_pass_rate(r)) is not None]
     mean_rate = sum(pass_rates) / len(pass_rates) if pass_rates else 0.0
 
     # Ungated companion: per-eval assertion pass rate WITHOUT the hallucination
     # gate, so the gating effect is visible rather than silently folded in.
-    assertion_only = [
-        r["summary"].get("pass_rate", 0.0) for r in records if "summary" in r
-    ]
-    mean_rate_assertions_only = (
-        sum(assertion_only) / len(assertion_only) if assertion_only else 0.0
-    )
+    assertion_only = [r["summary"].get("pass_rate", 0.0) for r in records if "summary" in r]
+    mean_rate_assertions_only = sum(assertion_only) / len(assertion_only) if assertion_only else 0.0
 
     by_config: dict[str, list] = {"with_skill": [], "without_skill": []}
     for r in records:
@@ -389,9 +373,7 @@ def summarize(records: list[dict]) -> dict:
                 "config": r["config"],
                 "run": r["run"],
                 "bad_claims": [
-                    c
-                    for c in r["universal"].get("claims", [])
-                    if not c.get("verified", True)
+                    c for c in r["universal"].get("claims", []) if not c.get("verified", True)
                 ],
             }
             for r in universal_failures
@@ -400,9 +382,7 @@ def summarize(records: list[dict]) -> dict:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Grade using-a-debugger skill eval responses"
-    )
+    parser = argparse.ArgumentParser(description="Grade using-a-debugger skill eval responses")
     parser.add_argument(
         "--responses-dir",
         required=True,
@@ -418,9 +398,7 @@ def main():
         "--timeout", type=int, default=300, help="Timeout per grader call in seconds"
     )
     parser.add_argument("--parallel", type=int, default=4, help="Parallel grader calls")
-    parser.add_argument(
-        "--only-eval", type=int, default=None, help="Grade only this eval id"
-    )
+    parser.add_argument("--only-eval", type=int, default=None, help="Grade only this eval id")
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -444,9 +422,7 @@ def main():
 
     records = []
     with ThreadPoolExecutor(max_workers=args.parallel) as executor:
-        future_map = {
-            executor.submit(grade_unit, u, args.model, args.timeout): u for u in units
-        }
+        future_map = {executor.submit(grade_unit, u, args.model, args.timeout): u for u in units}
         for future in as_completed(future_map):
             unit = future_map[future]
             try:
