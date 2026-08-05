@@ -1,6 +1,6 @@
 # using-a-debugger
 
-An agent skill that teaches agents to drive interactive debuggers (breakpoints, stepping,
+A skill that teaches agents to drive interactive debuggers (breakpoints, stepping,
 reading live program state) instead of falling back to print-debugging. Cross-platform:
 Windows, Linux, macOS. Languages: C# (netcoredbg) and native C/C++ (lldb / gdb / cdb).
 
