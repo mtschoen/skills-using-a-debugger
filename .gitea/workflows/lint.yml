@@ -1,0 +1,44 @@
+name: lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  markdown:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DavidAnson/markdownlint-cli2-action@v23
+        with:
+          globs: '**/*.md'
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: pip install skills-ref==0.1.1
+      # The validator takes the skill name from the directory name, which the
+      # checkout gives as the repo name (skills-using-a-debugger).
+      - run: ln -s "$PWD" /tmp/using-a-debugger && agentskills validate /tmp/using-a-debugger
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: pip install ruff==0.15.15 pytest
+      - run: ruff check scripts evals
+      # Backend tests self-skip when their debugger or compiler is absent, so
+      # this runner exercises the transport, MI-parsing, discovery and setup
+      # layers. Live-driver coverage comes from a developer machine.
+      - run: python -m pytest scripts/dbgsession -q

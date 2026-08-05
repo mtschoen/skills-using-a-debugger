@@ -81,7 +81,10 @@ def _cmd_start(args: argparse.Namespace) -> int:
             )
 
     if not _wait_for_port_file(session_dir):
-        print(f"error: server did not write port file within {_PORT_WAIT_SECONDS}s", file=sys.stderr)
+        print(
+            f"error: server did not write port file within {_PORT_WAIT_SECONDS}s",
+            file=sys.stderr,
+        )
         return 1
     return 0
 

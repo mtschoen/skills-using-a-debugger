@@ -1,4 +1,7 @@
-import os, sys, pytest
+import os
+import sys
+
+import pytest
 from transport import open_transport
 
 ECHO = [sys.executable, "-u", "-c",
