@@ -38,6 +38,7 @@ jobs:
           python-version: '3.13'
       - run: pip install ruff==0.15.15 pytest
       - run: ruff check scripts evals
+      - run: ruff format --check scripts evals
       # Backend tests self-skip when their debugger or compiler is absent, so
       # this runner exercises the transport, MI-parsing, discovery and setup
       # layers. Live-driver coverage comes from a developer machine.
